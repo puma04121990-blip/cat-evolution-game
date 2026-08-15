@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180">
-  <defs><filter id="s"><feDropShadow dx="0" dy="5" stdDeviation="3" flood-opacity=".25"/></filter></defs>
-  <g filter="url(#s)"><path d="M25 132 100 159l77-27-76-29z" fill="#759f69"/><path d="M55 86h65v45H55z" fill="#ecf7f8"/><path d="M67 69h42v20H67z" fill="#f2c65a"/><path d="M38 94 82 77l20 25-45 17zM109 103l45-17 18 25-45 17z" fill="#2e7fa5"/><path d="m42 96 45 17m-37-24 45 17m23 7 45 17m-37-24 45 17" stroke="#93e4ed" stroke-width="3"/><path d="M88 87h7v44h-7z" fill="#6e9ba8"/><circle cx="91" cy="65" r="10" fill="#ffdd71"/></g>
-</svg>
