@@ -3,1177 +3,528 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Эволюция Кота</title>
-  <!-- Yandex Games SDK -->
+  <meta name="theme-color" content="#EAF7FF">
+  <title>Город в облаках</title>
   <script src="/sdk.js"></script>
   <style>
+    /* TINY SKYLINE — светлый 2.5D-город в облаках: небесный голубой, тёплый белый, сады и сигнальный оранжевый. */
     :root {
-      --bg1: #1a0b2e;
-      --bg2: #2d1b4e;
-      --accent: #ff6b9d;
-      --accent2: #c44569;
-      --gold: #ffd93d;
-      --text: #fff8f0;
-      --card: rgba(255,255,255,0.08);
-      --card-border: rgba(255,255,255,0.15);
+      --sky: #eaf7ff;
+      --sky-deep: #bedff0;
+      --paper: #fffdf8;
+      --ink: #173442;
+      --muted: #6d8490;
+      --line: #c9e1ed;
+      --blue: #258cc8;
+      --blue-dark: #176b9a;
+      --green: #3eaa72;
+      --orange: #ff9c45;
+      --yellow: #ffd46c;
+      --card: rgba(255, 253, 248, .88);
+      --shadow: 0 18px 42px rgba(35, 107, 137, .14);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-
-    html, body {
-      height: 100%;
-      overscroll-behavior: none;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { min-height: 100%; overscroll-behavior: none; }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 50%, #1a0b2e 100%);
-      background-attachment: fixed;
-      color: var(--text);
-      min-height: 100%;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #f8fdff 0%, var(--sky) 53%, #d7eff8 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Arial", sans-serif;
       overflow-x: hidden;
       touch-action: manipulation;
     }
+    button { font: inherit; }
+    button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
-    .game-container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 12px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    .game-shell { width: min(100%, 560px); min-height: 100vh; margin: 0 auto; padding: 15px 14px 20px; position: relative; }
+    .game-shell::before, .game-shell::after { content: ""; position: fixed; pointer-events: none; border-radius: 50%; filter: blur(1px); z-index: -1; }
+    .game-shell::before { width: 270px; height: 270px; background: rgba(255, 212, 108, .27); top: -90px; right: -110px; }
+    .game-shell::after { width: 230px; height: 230px; background: rgba(62, 170, 114, .12); left: -110px; bottom: 20px; }
 
-    /* Header */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 4px;
-      margin-bottom: 8px;
-    }
+    .topline { display: flex; justify-content: space-between; align-items: center; padding: 2px 3px 14px; }
+    .brand { display: flex; align-items: center; gap: 9px; }
+    .brand-mark { width: 30px; height: 30px; position: relative; display: grid; place-items: center; }
+    .brand-mark::before { content: ""; width: 24px; height: 10px; border: 2px solid var(--blue); border-radius: 50%; transform: rotate(-21deg); }
+    .brand-mark::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); position: absolute; right: 1px; top: 2px; box-shadow: -15px 15px 0 #77c9ef; }
+    .brand-text { font-size: 15px; font-weight: 800; letter-spacing: -.04em; line-height: .95; text-transform: uppercase; }
+    .brand-text small { display: block; margin-top: 3px; font-size: 8px; letter-spacing: .13em; color: var(--muted); }
+    .city-badge { padding: 7px 9px; border: 1px solid var(--line); background: rgba(255,255,255,.58); font-size: 9px; font-weight: 700; letter-spacing: .06em; color: var(--blue-dark); text-transform: uppercase; }
 
-    .title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      background: linear-gradient(90deg, #ff6b9d, #ffd93d);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+    .resource-card { display: flex; justify-content: space-between; align-items: flex-end; padding: 13px 15px 14px; border: 1px solid rgba(37, 140, 200, .19); background: var(--card); box-shadow: 0 7px 25px rgba(38, 125, 166, .09); }
+    .resource-label { font-size: 9px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+    .energy-value { margin-top: 3px; color: var(--blue-dark); font-size: clamp(27px, 8vw, 39px); line-height: 1; letter-spacing: -.07em; font-weight: 900; }
+    .energy-unit { font-size: 11px; font-weight: 700; letter-spacing: -.02em; }
+    .rate { text-align: right; padding-bottom: 3px; font-size: 10px; color: var(--muted); }
+    .rate strong { color: var(--green); font-size: 13px; }
 
-    .stats {
-      text-align: right;
-      font-size: 0.85rem;
-      opacity: 0.9;
-    }
+    .skyline-stage { min-height: 326px; margin: 11px 0 8px; padding: 18px 15px 16px; position: relative; overflow: hidden; background: linear-gradient(155deg, rgba(255,255,255,.87), rgba(213,240,250,.9)); border: 1px solid rgba(37, 140, 200, .2); box-shadow: var(--shadow); }
+    .skyline-stage::before { content: ""; position: absolute; top: 28px; left: -42px; width: 157px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.78); box-shadow: 292px 46px 0 2px rgba(255,255,255,.68), 184px 150px 0 10px rgba(255,255,255,.36); }
+    .skyline-stage::after { content: ""; position: absolute; width: 70px; height: 70px; top: 17px; right: 24px; border: 1px dashed rgba(255, 156, 69, .56); border-radius: 50%; }
+    .stage-header { position: relative; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .stage-kicker { color: var(--blue-dark); font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .stage-name { margin-top: 3px; font-size: 21px; line-height: 1; font-weight: 900; letter-spacing: -.055em; }
+    .stage-level { padding: 6px 8px; background: var(--ink); color: var(--paper); font-size: 9px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
+    .city-button { width: 220px; height: 220px; max-width: 76vw; max-height: 76vw; margin: 1px auto 0; border: 0; border-radius: 50%; position: relative; display: grid; place-items: center; cursor: pointer; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.99) 0 34%, rgba(255,255,255,.42) 35% 58%, transparent 59%); transition: transform .13s ease; }
+    .city-button:active, .city-button.clicked { transform: scale(.94); }
+    .city-button::before { content: ""; width: 182px; height: 182px; position: absolute; border: 1px solid rgba(37,140,200,.35); border-radius: 50%; box-shadow: 0 0 0 14px rgba(255,255,255,.3), 0 0 0 15px rgba(37,140,200,.12); animation: breathe 3.6s ease-in-out infinite; }
+    .city-button img { width: 180px; height: 180px; position: relative; z-index: 1; object-fit: contain; filter: drop-shadow(0 16px 10px rgba(26, 111, 150, .23)); pointer-events: none; transition: transform .32s ease, filter .32s ease; }
+    .city-button[data-stage="2"] img, .city-button[data-stage="4"] img, .city-button[data-stage="6"] img, .city-button[data-stage="8"] img { transform: scale(1.04); filter: saturate(1.08) drop-shadow(0 16px 10px rgba(26, 111, 150, .25)); }
+    .city-button[data-stage="9"] img { transform: scale(1.08); filter: saturate(1.14) brightness(1.04) drop-shadow(0 18px 12px rgba(26, 111, 150, .25)); }
+    .city-silhouette { position: absolute; z-index: 2; bottom: 28px; left: 50%; width: 124px; height: 13px; transform: translateX(-50%); opacity: 0; pointer-events: none; transition: height .32s ease, opacity .32s ease, width .32s ease; background: linear-gradient(90deg, transparent 0 6%, rgba(37,140,200,.38) 6% 14%, transparent 14% 18%, rgba(62,170,114,.42) 18% 29%, transparent 29% 36%, rgba(37,140,200,.42) 36% 48%, transparent 48% 55%, rgba(255,156,69,.38) 55% 68%, transparent 68% 75%, rgba(37,140,200,.42) 75% 91%, transparent 91%); clip-path: polygon(0 100%, 0 74%, 9% 74%, 9% 36%, 18% 36%, 18% 64%, 28% 64%, 28% 0, 39% 0, 39% 48%, 50% 48%, 50% 25%, 61% 25%, 61% 68%, 72% 68%, 72% 13%, 85% 13%, 85% 55%, 100% 55%, 100% 100%); }
+    .city-button[data-stage="2"] .city-silhouette { opacity: .42; height: 17px; }
+    .city-button[data-stage="3"] .city-silhouette, .city-button[data-stage="4"] .city-silhouette { opacity: .56; width: 142px; height: 25px; }
+    .city-button[data-stage="5"] .city-silhouette, .city-button[data-stage="6"] .city-silhouette { opacity: .68; width: 156px; height: 33px; box-shadow: 0 -8px 0 -6px var(--orange); }
+    .city-button[data-stage="7"] .city-silhouette, .city-button[data-stage="8"] .city-silhouette { opacity: .76; width: 165px; height: 39px; filter: saturate(1.3); box-shadow: 0 -9px 0 -6px var(--yellow); }
+    .city-button[data-stage="9"] .city-silhouette, .city-button[data-stage="10"] .city-silhouette { opacity: .9; width: 178px; height: 49px; filter: saturate(1.4); box-shadow: 0 -11px 0 -5px var(--yellow), 0 -20px 0 -18px rgba(37,140,200,.23); }
+    .tap-hint { position: absolute; z-index: 3; bottom: 5px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; font-size: 9px; color: var(--muted); letter-spacing: .05em; white-space: nowrap; text-transform: uppercase; }
+    .tap-hint i { width: 8px; height: 8px; background: var(--orange); border-radius: 50%; display: inline-block; box-shadow: 0 0 0 4px rgba(255,156,69,.18); }
 
-    .fish-count {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--gold);
-    }
+    .progress-wrap { position: relative; z-index: 2; margin: 0 auto; width: min(100%, 345px); }
+    .progress-label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+    .progress-label strong { color: var(--ink); }
+    .progress-track { height: 10px; overflow: hidden; border-radius: 30px; background: rgba(23,52,66,.11); }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), #79c8eb 55%, var(--yellow)); border-radius: inherit; transition: width .32s ease; }
 
-    .per-sec {
-      font-size: 0.8rem;
-      opacity: 0.7;
-    }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 9px; }
+    .tab { padding: 12px 8px; border: 1px solid var(--line); background: rgba(255,255,255,.42); color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 800; text-align: center; transition: all .18s ease; }
+    .tab.active { color: var(--paper); background: var(--blue-dark); border-color: var(--blue-dark); box-shadow: 0 7px 16px rgba(23,107,154,.18); }
+    .development { min-height: 270px; }
+    .upgrade { position: relative; display: grid; grid-template-columns: 39px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; margin-bottom: 8px; border: 1px solid var(--line); background: var(--card); box-shadow: 0 6px 18px rgba(23,84,112,.07); cursor: pointer; transition: transform .14s ease, border-color .14s ease, background .14s ease; }
+    .upgrade:hover { transform: translateY(-2px); border-color: var(--blue); }
+    .upgrade:active { transform: scale(.98); }
+    .upgrade.disabled { opacity: .5; cursor: default; }
+    .upgrade.disabled:hover { transform: none; border-color: var(--line); }
+    .upgrade-code { width: 39px; height: 39px; display: grid; place-items: center; border: 1px solid rgba(37,140,200,.27); color: var(--blue-dark); background: #eef9fd; font-size: 10px; font-weight: 900; letter-spacing: -.04em; }
+    .upgrade-name { font-size: 12px; line-height: 1.15; font-weight: 900; }
+    .upgrade-desc { margin-top: 2px; font-size: 9px; color: var(--muted); }
+    .upgrade-level { margin-top: 4px; color: var(--green); font-size: 9px; font-weight: 800; }
+    .upgrade-cost { min-width: 68px; color: var(--blue-dark); font-size: 11px; font-weight: 900; text-align: right; }
 
-    /* Cat area */
-    .cat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      min-height: 280px;
-      margin: 10px 0;
-    }
+    .altitude-panel { min-height: 280px; padding: 26px 18px; text-align: center; border: 1px solid var(--line); background: linear-gradient(145deg, #f9feff, #e4f6fb); box-shadow: var(--shadow); }
+    .altitude-orbit { width: 72px; height: 72px; margin: 0 auto 12px; position: relative; border: 1px solid var(--blue); border-radius: 50%; }
+    .altitude-orbit::before { content: ""; width: 22px; height: 22px; position: absolute; inset: 24px; border-radius: 50%; background: var(--orange); box-shadow: 24px -6px 0 -6px var(--green), -13px 29px 0 -6px var(--blue); }
+    .altitude-panel h3 { font-size: 22px; letter-spacing: -.055em; }
+    .altitude-panel > p { max-width: 330px; margin: 9px auto 15px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .altitude-stats { margin: 14px auto; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+    .altitude-stat { padding: 8px 9px; background: rgba(255,255,255,.69); border: 1px solid var(--line); font-size: 10px; }
+    .altitude-stat strong { color: var(--blue-dark); }
+    .altitude-btn { padding: 13px 18px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; font-size: 12px; font-weight: 900; transition: all .18s ease; }
+    .altitude-btn:not(:disabled):hover { color: var(--ink); background: var(--yellow); }
+    .altitude-btn:disabled { opacity: .4; cursor: not-allowed; }
 
-    .cat-stage-name {
-      font-size: 1rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-      opacity: 0.85;
-      text-align: center;
-    }
+    .footer-controls { display: flex; justify-content: space-between; gap: 7px; padding: 10px 2px 0; }
+    .footer-controls button { padding: 8px 4px; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 700; }
+    .footer-controls button:hover { color: var(--blue-dark); border-bottom-color: var(--blue-dark); }
 
-    .cat-wrapper {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
+    .floating-value { position: absolute; z-index: 10; pointer-events: none; color: var(--blue-dark); font-size: 17px; font-weight: 900; letter-spacing: -.04em; text-shadow: 0 2px 8px rgba(255,255,255,.95); animation: floatUp .9s cubic-bezier(.23,1,.32,1) forwards; }
+    .floating-value.critical { color: #e86c21; font-size: 19px; }
+    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .particle { width: 7px; height: 7px; position: absolute; border-radius: 2px; background: var(--yellow); animation: particle .7s ease-out forwards; }
+    .toast { width: max-content; max-width: calc(100vw - 30px); position: fixed; z-index: 100; left: 50%; bottom: 26px; padding: 11px 16px; color: var(--paper); background: var(--ink); box-shadow: 0 12px 30px rgba(23,52,66,.24); font-size: 12px; font-weight: 800; transform: translateX(-50%) translateY(90px); transition: transform .28s cubic-bezier(.23,1,.32,1); pointer-events: none; text-align: center; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .modal { display: none; position: fixed; z-index: 90; inset: 0; padding: 20px; background: rgba(23,52,66,.48); align-items: center; justify-content: center; }
+    .modal.show { display: flex; }
+    .modal-content { width: min(100%, 355px); padding: 25px 21px; background: var(--paper); box-shadow: 0 20px 60px rgba(12,48,62,.28); border-top: 7px solid var(--orange); text-align: center; }
+    .modal-symbol { width: 46px; height: 46px; margin: 0 auto 12px; position: relative; border-radius: 50%; background: var(--sky-deep); }
+    .modal-symbol::before { content: ""; width: 16px; height: 16px; position: absolute; inset: 15px; border-radius: 50%; background: var(--orange); box-shadow: 15px -4px 0 -5px var(--green); }
+    .modal-content h2 { font-size: 24px; letter-spacing: -.06em; }
+    .modal-content p { margin: 10px 0 18px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .modal-actions { display: flex; justify-content: center; gap: 8px; }
+    .modal-btn { padding: 11px 14px; border: 1px solid var(--ink); cursor: pointer; font-size: 11px; font-weight: 900; }
+    .modal-btn.primary { background: var(--ink); color: var(--paper); }
+    .modal-btn.primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
+    .modal-btn.secondary { color: var(--ink); background: transparent; }
 
-    .cat {
-      font-size: 140px;
-      line-height: 1;
-      transition: transform 0.1s ease;
-      filter: drop-shadow(0 8px 20px rgba(255,107,157,0.4));
-      animation: float 3s ease-in-out infinite;
-      width: 180px;
-      height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      object-fit: contain;
-      border-radius: 24px;
-    }
-
-    .cat img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 20px;
-      pointer-events: none;
-    }
-
-    .cat:active, .cat.clicked {
-      transform: scale(0.92);
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
-    }
-
-    .click-effect {
-      position: absolute;
-      pointer-events: none;
-      font-weight: 800;
-      font-size: 1.4rem;
-      color: var(--gold);
-      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      animation: floatUp 0.9s ease-out forwards;
-      z-index: 10;
-    }
-
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
-    }
-
-    .particles {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .particle {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--gold);
-      animation: particle 0.7s ease-out forwards;
-    }
-
-    @keyframes particle {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
-    }
-
-    /* Evolution progress */
-    .evo-bar-container {
-      width: 100%;
-      max-width: 280px;
-      margin-top: 16px;
-    }
-
-    .evo-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      margin-bottom: 4px;
-      opacity: 0.8;
-    }
-
-    .evo-bar {
-      height: 10px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 20px;
-      overflow: hidden;
-    }
-
-    .evo-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #ff6b9d, #ffd93d);
-      border-radius: 20px;
-      transition: width 0.3s ease;
-    }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 6px;
-      margin: 12px 0 8px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 10px;
-      text-align: center;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .tab.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-color: transparent;
-      box-shadow: 0 4px 15px rgba(255,107,157,0.4);
-    }
-
-    /* Shop */
-    .shop {
-      flex: 1;
-      overflow-y: auto;
-      max-height: 340px;
-      padding-right: 4px;
-    }
-
-    .shop::-webkit-scrollbar {
-      width: 4px;
-    }
-    .shop::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,0.2);
-      border-radius: 4px;
-    }
-
-    .upgrade {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: var(--card);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .upgrade:active {
-      transform: scale(0.98);
-    }
-
-    .upgrade.disabled {
-      opacity: 0.45;
-      pointer-events: none;
-    }
-
-    .upgrade-icon {
-      font-size: 2rem;
-      width: 48px;
-      text-align: center;
-    }
-
-    .upgrade-info {
-      flex: 1;
-    }
-
-    .upgrade-name {
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .upgrade-desc {
-      font-size: 0.75rem;
-      opacity: 0.7;
-      margin-top: 2px;
-    }
-
-    .upgrade-level {
-      font-size: 0.7rem;
-      color: var(--gold);
-      margin-top: 2px;
-    }
-
-    .upgrade-cost {
-      font-weight: 700;
-      color: var(--gold);
-      font-size: 0.95rem;
-      white-space: nowrap;
-    }
-
-    /* Prestige panel */
-    .prestige-panel {
-      text-align: center;
-      padding: 20px 10px;
-    }
-
-    .prestige-btn {
-      background: linear-gradient(135deg, #9b59b6, #8e44ad);
-      border: none;
-      color: white;
-      padding: 14px 28px;
-      border-radius: 16px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 16px;
-      box-shadow: 0 6px 20px rgba(155,89,182,0.4);
-    }
-
-    .prestige-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* Footer */
-    .footer {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      padding: 10px 0 4px;
-      font-size: 0.75rem;
-      opacity: 0.6;
-    }
-
-    .footer button {
-      background: none;
-      border: none;
-      color: var(--text);
-      cursor: pointer;
-      opacity: 0.8;
-    }
-
-    /* Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-content {
-      background: linear-gradient(145deg, #2d1b4e, #1a0b2e);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 24px;
-      max-width: 340px;
-      width: 100%;
-      text-align: center;
-    }
-
-    .modal h2 {
-      margin-bottom: 12px;
-      color: var(--gold);
-    }
-
-    .modal p {
-      margin-bottom: 16px;
-      line-height: 1.5;
-      opacity: 0.9;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .modal-btn {
-      padding: 10px 20px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .modal-btn.primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: white;
-    }
-
-    .modal-btn.secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--card-border);
-    }
-
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: rgba(0,0,0,0.85);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-weight: 600;
-      z-index: 200;
-      transition: transform 0.3s ease;
-      pointer-events: none;
-    }
-
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Offline earnings */
-    .offline-popup {
-      display: none;
-    }
+    @keyframes breathe { 0%, 100% { transform: scale(.97); opacity: .72; } 50% { transform: scale(1.04); opacity: 1; } }
+    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-84px) scale(1.16); } }
+    @keyframes particle { 0% { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(95deg) scale(0); } }
+    @media (min-width: 620px) { .game-shell { padding-top: 24px; } .skyline-stage { min-height: 355px; } .city-button { width: 238px; height: 238px; } .city-button img { width: 195px; height: 195px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   </style>
 </head>
 <body>
-  <div class="game-container">
-    <div class="header">
-      <div class="title">🐱 Эволюция Кота</div>
-      <div class="stats">
-        <div class="fish-count" id="fishDisplay">0 🐟</div>
-        <div class="per-sec" id="perSecDisplay">0 / сек</div>
+  <main class="game-shell">
+    <header class="topline">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">Город<br>в облаках<small>развивайте свою высоту</small></div>
       </div>
-    </div>
+      <span class="city-badge">Городской проект</span>
+    </header>
 
-    <div class="cat-area">
-      <div class="cat-stage-name" id="stageName">Котёнок</div>
-      <div class="cat-wrapper" id="catWrapper">
-        <div class="cat" id="cat">🐱</div>
-        <div class="particles" id="particles"></div>
+    <section class="resource-card" aria-label="Ресурсы города">
+      <div>
+        <p class="resource-label">Энергия города</p>
+        <div class="energy-value" id="energyDisplay">0 <span class="energy-unit">энергии</span></div>
       </div>
-      <div class="evo-bar-container">
-        <div class="evo-label">
-          <span>Эволюция</span>
-          <span id="evoPercent">0%</span>
+      <p class="rate"><strong id="perSecDisplay">0</strong><br>энергии в секунду</p>
+    </section>
+
+    <section class="skyline-stage" aria-label="Текущая стадия развития города">
+      <div class="stage-header">
+        <div>
+          <p class="stage-kicker">Текущая высота</p>
+          <h1 class="stage-name" id="stageName">Небесная платформа</h1>
         </div>
-        <div class="evo-bar">
-          <div class="evo-fill" id="evoFill" style="width: 0%"></div>
-        </div>
+        <span class="stage-level" id="stageLevel">ЭТАП 01</span>
       </div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" data-tab="shop">Улучшения</div>
-      <div class="tab" data-tab="prestige">Престиж</div>
-    </div>
-
-    <div class="shop" id="shopPanel"></div>
-
-    <div class="prestige-panel" id="prestigePanel" style="display:none">
-      <div style="font-size: 3rem; margin-bottom: 8px;">👑</div>
-      <h3>Престиж</h3>
-      <p style="opacity:0.8; font-size:0.9rem; margin: 10px 0;">
-        Сбросить прогресс и получить постоянный множитель ко всем доходам.
-      </p>
-      <div style="margin: 12px 0; font-size: 1.1rem;">
-        Текущий множитель: <span id="prestigeMult" style="color:var(--gold); font-weight:700;">x1.00</span>
+      <button class="city-button" id="cityButton" data-stage="1" aria-label="Зарядить городское ядро">
+        <img id="cityImage" src="assets/skyline-stage-01.png" alt="Небесная платформа">
+        <span class="city-silhouette" aria-hidden="true"></span>
+        <span class="particles" id="particles"></span>
+      </button>
+      <p class="tap-hint"><i></i> Зарядите городское ядро</p>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Развитие города</span><strong id="evoPercent">0%</strong></div>
+        <div class="progress-track"><div class="progress-fill" id="evoFill"></div></div>
       </div>
-      <div style="margin-bottom: 8px; opacity:0.7; font-size:0.85rem;">
-        Нужно минимум 1 000 000 🐟 для престижа
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="Разделы игры">
+      <button class="tab active" id="developmentTab" data-tab="development" role="tab" aria-selected="true">Развитие города</button>
+      <button class="tab" id="altitudeTab" data-tab="altitude" role="tab" aria-selected="false">Новая высота</button>
+    </div>
+
+    <section class="development" id="developmentPanel" role="tabpanel" aria-labelledby="developmentTab"></section>
+
+    <section class="altitude-panel" id="altitudePanel" role="tabpanel" aria-labelledby="altitudeTab" style="display:none">
+      <div class="altitude-orbit" aria-hidden="true"></div>
+      <h3>Новая высота</h3>
+      <p>Начните развитие города заново и сохраните постоянный коэффициент развития для будущих высот.</p>
+      <div class="altitude-stats">
+        <span class="altitude-stat">Коэффициент: <strong id="prestigeMult">×1,00</strong></span>
+        <span class="altitude-stat">Порог: <strong>1 000 000 энергии</strong></span>
       </div>
-      <button class="prestige-btn" id="prestigeBtn" disabled>Сделать престиж (+0.5x)</button>
-    </div>
+      <button class="altitude-btn" id="prestigeBtn" disabled>Открыть новую высоту</button>
+    </section>
 
-    <div class="footer">
-      <button id="adBtn">🎬 +Рыбки</button>
-      <button id="soundBtn">🔊 Звук</button>
-      <button id="resetBtn">Сброс</button>
-    </div>
-  </div>
+    <footer class="footer-controls">
+      <button id="adBtn">Получить городской грант</button>
+      <button id="soundBtn">Звук: вкл.</button>
+      <button id="resetBtn">Сбросить город</button>
+    </footer>
+  </main>
 
-  <!-- Modals -->
-  <div class="modal" id="offlineModal">
+  <div class="modal" id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle">
     <div class="modal-content">
-      <h2>Пока тебя не было...</h2>
-      <p id="offlineText">Кот наловил рыбок!</p>
-      <div class="modal-buttons">
-        <button class="modal-btn primary" id="offlineOk">Забрать</button>
-      </div>
+      <div class="modal-symbol" aria-hidden="true"></div>
+      <h2 id="offlineTitle">Пока вас не было…</h2>
+      <p id="offlineText">Город накопил энергию.</p>
+      <div class="modal-actions"><button class="modal-btn primary" id="offlineOk">Забрать энергию</button></div>
     </div>
   </div>
-
-  <div class="modal" id="prestigeModal">
+  <div class="modal" id="prestigeModal" role="dialog" aria-modal="true" aria-labelledby="prestigeTitle">
     <div class="modal-content">
-      <h2>Престиж?</h2>
-      <p>Весь прогресс будет сброшен, но ты получишь постоянный множитель x<span id="newPrestigeMult">1.5</span> ко всем доходам.</p>
-      <div class="modal-buttons">
-        <button class="modal-btn secondary" id="prestigeCancel">Отмена</button>
-        <button class="modal-btn primary" id="prestigeConfirm">Престиж!</button>
-      </div>
+      <div class="modal-symbol" aria-hidden="true"></div>
+      <h2 id="prestigeTitle">Открыть новую высоту?</h2>
+      <p>Развитие текущего города сбросится, но коэффициент развития вырастет до <strong id="newPrestigeMult">×1,50</strong>.</p>
+      <div class="modal-actions"><button class="modal-btn secondary" id="prestigeCancel">Отмена</button><button class="modal-btn primary" id="prestigeConfirm">Открыть высоту</button></div>
     </div>
   </div>
-
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    // ==================== GAME DATA ====================
+    // TINY SKYLINE — локализованный кликер. Экономика, автосохранение и Yandex Games SDK сохраняют исходную логику.
+    const ASSETS = {
+      stage1: 'assets/skyline-stage-01.png',
+      stage3: 'assets/skyline-stage-01.png',
+      stage5: 'assets/skyline-stage-01.png',
+      stage7: 'assets/skyline-stage-01.png',
+      stage10: 'assets/skyline-stage-01.png'
+    };
+
     const STAGES = [
-      { name: "Котёнок", emoji: "🐱", img: "assets/cat1.jpg", req: 0 },
-      { name: "Домашний кот", emoji: "😺", img: null, req: 500 },
-      { name: "Толстый кот", emoji: "😸", img: "assets/cat2.jpg", req: 5000 },
-      { name: "Кот-джентльмен", emoji: "😼", img: null, req: 25000 },
-      { name: "Королевский кот", emoji: "👑", img: "assets/cat3.jpg", req: 100000 },
-      { name: "Ниндзя-кот", emoji: "🥷", img: "assets/cat4.jpg", req: 500000 },
-      { name: "Космический кот", emoji: "🚀", img: "assets/cat5.jpg", req: 2000000 },
-      { name: "Божественный кот", emoji: "✨", img: "assets/cat6.jpg", req: 10000000 },
-      { name: "Легендарный кот", emoji: "🌟", img: "assets/cat7.jpg", req: 50000000 },
-      { name: "Абсолютный кот", emoji: "♾️", img: "assets/cat8.jpg", req: 250000000 }
+      { name: 'Небесная платформа', img: ASSETS.stage1, req: 0, stage: 1 },
+      { name: 'Первые огни', img: ASSETS.stage1, req: 500, stage: 2 },
+      { name: 'Уютный квартал', img: ASSETS.stage3, req: 5000, stage: 3 },
+      { name: 'Сад на крыше', img: ASSETS.stage3, req: 25000, stage: 4 },
+      { name: 'Лёгкий мост', img: ASSETS.stage5, req: 100000, stage: 5 },
+      { name: 'Воздушная станция', img: ASSETS.stage5, req: 500000, stage: 6 },
+      { name: 'Солнечный район', img: ASSETS.stage7, req: 2000000, stage: 7 },
+      { name: 'Умный город', img: ASSETS.stage7, req: 10000000, stage: 8 },
+      { name: 'Небесная столица', img: ASSETS.stage10, req: 50000000, stage: 9 },
+      { name: 'Город мечты', img: ASSETS.stage10, req: 250000000, stage: 10 }
     ];
 
     const UPGRADES = [
-      {
-        id: "claw",
-        name: "Острые когти",
-        icon: "🐾",
-        desc: "+1 сила клика",
-        baseCost: 15,
-        costMult: 1.15,
-        effect: (lvl) => ({ clickPower: lvl }),
-        maxLevel: 100
-      },
-      {
-        id: "bowl",
-        name: "Миска с едой",
-        icon: "🥣",
-        desc: "+0.5 рыбки/сек",
-        baseCost: 50,
-        costMult: 1.18,
-        effect: (lvl) => ({ perSec: lvl * 0.5 }),
-        maxLevel: 100
-      },
-      {
-        id: "friend",
-        name: "Кот-друг",
-        icon: "🐈",
-        desc: "+3 рыбки/сек",
-        baseCost: 300,
-        costMult: 1.22,
-        effect: (lvl) => ({ perSec: lvl * 3 }),
-        maxLevel: 50
-      },
-      {
-        id: "farm",
-        name: "Рыбная ферма",
-        icon: "🐟",
-        desc: "+15 рыбок/сек",
-        baseCost: 2000,
-        costMult: 1.25,
-        effect: (lvl) => ({ perSec: lvl * 15 }),
-        maxLevel: 40
-      },
-      {
-        id: "factory",
-        name: "Завод рыбок",
-        icon: "🏭",
-        desc: "+80 рыбок/сек",
-        baseCost: 15000,
-        costMult: 1.28,
-        effect: (lvl) => ({ perSec: lvl * 80 }),
-        maxLevel: 30
-      },
-      {
-        id: "multiplier",
-        name: "Золотая лапка",
-        icon: "✨",
-        desc: "x1.5 ко всем доходам",
-        baseCost: 50000,
-        costMult: 2.5,
-        effect: (lvl) => ({ mult: Math.pow(1.5, lvl) }),
-        maxLevel: 10
-      },
-      {
-        id: "mega",
-        name: "Мега-клик",
-        icon: "💥",
-        desc: "+25 сила клика",
-        baseCost: 100000,
-        costMult: 1.35,
-        effect: (lvl) => ({ clickPower: lvl * 25 }),
-        maxLevel: 50
-      },
-      {
-        id: "empire",
-        name: "Кошачья империя",
-        icon: "🏰",
-        desc: "+500 рыбок/сек",
-        baseCost: 500000,
-        costMult: 1.4,
-        effect: (lvl) => ({ perSec: lvl * 500 }),
-        maxLevel: 20
-      }
+      { id: 'generator', code: '01', name: 'Ручной генератор', desc: '+1 к силе заряда', baseCost: 15, costMult: 1.15, effect: lvl => ({ clickPower: lvl }), maxLevel: 100 },
+      { id: 'solar', code: '02', name: 'Солнечная панель', desc: '+0,5 энергии в секунду', baseCost: 50, costMult: 1.18, effect: lvl => ({ perSec: lvl * .5 }), maxLevel: 100 },
+      { id: 'quarter', code: '03', name: 'Квартал мастеров', desc: '+3 энергии в секунду', baseCost: 300, costMult: 1.22, effect: lvl => ({ perSec: lvl * 3 }), maxLevel: 50 },
+      { id: 'farm', code: '04', name: 'Воздушная ферма', desc: '+15 энергии в секунду', baseCost: 2000, costMult: 1.25, effect: lvl => ({ perSec: lvl * 15 }), maxLevel: 40 },
+      { id: 'station', code: '05', name: 'Энергостанция', desc: '+80 энергии в секунду', baseCost: 15000, costMult: 1.28, effect: lvl => ({ perSec: lvl * 80 }), maxLevel: 30 },
+      { id: 'resonator', code: '06', name: 'Городской резонатор', desc: '×1,5 ко всем доходам', baseCost: 50000, costMult: 2.5, effect: lvl => ({ mult: Math.pow(1.5, lvl) }), maxLevel: 10 },
+      { id: 'node', code: '07', name: 'Импульсный узел', desc: '+25 к силе заряда', baseCost: 100000, costMult: 1.35, effect: lvl => ({ clickPower: lvl * 25 }), maxLevel: 50 },
+      { id: 'network', code: '08', name: 'Облачная мегасеть', desc: '+500 энергии в секунду', baseCost: 500000, costMult: 1.4, effect: lvl => ({ perSec: lvl * 500 }), maxLevel: 20 }
     ];
 
-    // ==================== STATE ====================
-    let state = {
-      fish: 0,
-      totalFish: 0,
-      clickPower: 1,
-      perSec: 0,
-      mult: 1,
-      prestigeMult: 1,
-      upgrades: {},
-      lastSave: Date.now(),
-      sound: true
-    };
+    const STORAGE_KEY = 'tinySkylineSave';
+    let state = { energy: 0, totalEnergy: 0, clickPower: 1, perSec: 0, mult: 1, prestigeMult: 1, upgrades: {}, lastSave: Date.now(), sound: true };
+    UPGRADES.forEach(upgrade => state.upgrades[upgrade.id] = 0);
 
-    // Init upgrades levels
-    UPGRADES.forEach(u => state.upgrades[u.id] = 0);
-
-    // ==================== AUDIO ====================
     let audioCtx = null;
+    let ysdk = null;
+    let player = null;
+    let lastInterstitial = 0;
+    let lastTick = Date.now();
+    let isVisible = true;
+    const INTERSTITIAL_COOLDOWN = 90000;
+
+    function formatNumber(value) {
+      const n = Math.max(0, Number(value) || 0);
+      const compact = (divisor, suffix, digits) => `${(n / divisor).toFixed(digits).replace('.', ',')} ${suffix}`;
+      if (n < 1000) return Math.floor(n).toLocaleString('ru-RU');
+      if (n < 1e6) return compact(1e3, 'тыс.', 1);
+      if (n < 1e9) return compact(1e6, 'млн', 2);
+      if (n < 1e12) return compact(1e9, 'млрд', 2);
+      return compact(1e12, 'трлн', 2);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2300);
+    }
 
     function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     function playSound(type) {
       if (!state.sound || !audioCtx) return;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      if (type === 'click') {
-        osc.frequency.value = 600 + Math.random() * 200;
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
-      } else if (type === 'buy') {
-        osc.frequency.value = 400;
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.2);
-      } else if (type === 'evolve') {
-        osc.type = 'triangle';
-        osc.frequency.value = 300;
-        osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.4);
-        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.5);
-      } else if (type === 'prestige') {
-        osc.type = 'sawtooth';
-        osc.frequency.value = 200;
-        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.6);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.7);
-      }
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      const profiles = {
+        charge: [520, 760, .09, .10],
+        build: [330, 700, .10, .18],
+        evolve: [300, 940, .12, .42],
+        altitude: [220, 1150, .11, .62]
+      };
+      const [start, end, volume, duration] = profiles[type] || profiles.charge;
+      osc.type = type === 'altitude' ? 'triangle' : 'sine';
+      osc.frequency.setValueAtTime(start, now);
+      osc.frequency.exponentialRampToValueAtTime(end, now + duration);
+      gain.gain.setValueAtTime(volume, now);
+      gain.gain.exponentialRampToValueAtTime(.001, now + duration);
+      osc.start(); osc.stop(now + duration);
     }
 
-    // ==================== UTILS ====================
-    function formatNumber(n) {
-      if (n < 1000) return Math.floor(n).toString();
-      if (n < 1e6) return (n / 1e3).toFixed(1) + 'K';
-      if (n < 1e9) return (n / 1e6).toFixed(2) + 'M';
-      if (n < 1e12) return (n / 1e9).toFixed(2) + 'B';
-      return (n / 1e12).toFixed(2) + 'T';
-    }
-
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
-    }
-
-    // ==================== CORE LOGIC ====================
     function recalculate() {
-      let clickPower = 1;
-      let perSec = 0;
-      let mult = 1;
-
-      UPGRADES.forEach(u => {
-        const lvl = state.upgrades[u.id] || 0;
-        if (lvl > 0) {
-          const eff = u.effect(lvl);
-          if (eff.clickPower) clickPower += eff.clickPower;
-          if (eff.perSec) perSec += eff.perSec;
-          if (eff.mult) mult *= eff.mult;
-        }
+      let clickPower = 1, perSec = 0, mult = 1;
+      UPGRADES.forEach(upgrade => {
+        const level = state.upgrades[upgrade.id] || 0;
+        if (!level) return;
+        const effect = upgrade.effect(level);
+        if (effect.clickPower) clickPower += effect.clickPower;
+        if (effect.perSec) perSec += effect.perSec;
+        if (effect.mult) mult *= effect.mult;
       });
-
       state.clickPower = clickPower * state.prestigeMult * mult;
       state.perSec = perSec * state.prestigeMult * mult;
       state.mult = mult;
     }
 
-    function getUpgradeCost(u) {
-      const lvl = state.upgrades[u.id] || 0;
-      return Math.floor(u.baseCost * Math.pow(u.costMult, lvl));
+    function getUpgradeCost(upgrade) { return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, state.upgrades[upgrade.id] || 0)); }
+    function canBuy(upgrade) { return (state.upgrades[upgrade.id] || 0) < upgrade.maxLevel && state.energy >= getUpgradeCost(upgrade); }
+    function getCurrentStage() { return [...STAGES].reverse().find(stage => state.totalEnergy >= stage.req) || STAGES[0]; }
+    function getNextStage() { const index = STAGES.findIndex(stage => stage.name === getCurrentStage().name); return STAGES[index + 1] || null; }
+
+    function createParticles() {
+      const holder = document.getElementById('particles');
+      for (let i = 0; i < 7; i++) {
+        const particle = document.createElement('i');
+        particle.className = 'particle';
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 42 + Math.random() * 62;
+        particle.style.left = '50%'; particle.style.top = '50%';
+        particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+        particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+        particle.style.background = i % 3 === 0 ? '#ff9c45' : i % 3 === 1 ? '#ffd46c' : '#3eaa72';
+        holder.appendChild(particle);
+        setTimeout(() => particle.remove(), 700);
+      }
     }
 
-    function canBuy(u) {
-      const lvl = state.upgrades[u.id] || 0;
-      if (lvl >= u.maxLevel) return false;
-      return state.fish >= getUpgradeCost(u);
+    function chargeCity(event) {
+      initAudio();
+      let amount = state.clickPower;
+      const isCritical = Math.random() < .08;
+      if (isCritical) amount *= 5;
+      state.energy += amount; state.totalEnergy += amount;
+      const button = document.getElementById('cityButton');
+      button.classList.add('clicked'); setTimeout(() => button.classList.remove('clicked'), 115);
+      const rect = button.getBoundingClientRect();
+      const pointX = (event.clientX || event.touches?.[0]?.clientX || rect.left + rect.width / 2) - rect.left;
+      const pointY = (event.clientY || event.touches?.[0]?.clientY || rect.top + rect.height / 2) - rect.top;
+      const value = document.createElement('span');
+      value.className = `floating-value${isCritical ? ' critical' : ''}`;
+      value.textContent = `${isCritical ? 'ЭНЕРГОВСПЛЕСК! ' : '+'}${formatNumber(amount)}`;
+      value.style.left = `${pointX}px`; value.style.top = `${pointY}px`;
+      button.appendChild(value); setTimeout(() => value.remove(), 900);
+      createParticles(); playSound('charge');
+      const previous = document.getElementById('stageName').textContent;
+      updateUI();
+      renderDevelopment();
+      const current = getCurrentStage();
+      if (current.name !== previous) { playSound('evolve'); showToast(`Город вырос: ${current.name}`); }
+      save();
+    }
+
+    function updateUI() {
+      document.getElementById('energyDisplay').innerHTML = `${formatNumber(state.energy)} <span class="energy-unit">энергии</span>`;
+      document.getElementById('perSecDisplay').textContent = formatNumber(state.perSec);
+      const stage = getCurrentStage();
+      const image = document.getElementById('cityImage');
+      image.src = stage.img; image.alt = stage.name;
+      document.getElementById('stageName').textContent = stage.name;
+      document.getElementById('stageLevel').textContent = `ЭТАП ${String(stage.stage).padStart(2, '0')}`;
+      document.getElementById('cityButton').dataset.stage = stage.stage;
+      const next = getNextStage();
+      if (next) {
+        const progress = Math.min(100, Math.floor(((state.totalEnergy - stage.req) / (next.req - stage.req)) * 100));
+        document.getElementById('evoFill').style.width = `${Math.max(0, progress)}%`;
+        document.getElementById('evoPercent').textContent = `${Math.max(0, progress)}%`;
+      } else {
+        document.getElementById('evoFill').style.width = '100%';
+        document.getElementById('evoPercent').textContent = 'ГОРОД МЕЧТЫ';
+      }
+      document.getElementById('prestigeMult').textContent = `×${state.prestigeMult.toFixed(2).replace('.', ',')}`;
+      const prestigeButton = document.getElementById('prestigeBtn');
+      const canPrestige = state.totalEnergy >= 1000000;
+      prestigeButton.disabled = !canPrestige;
+      prestigeButton.textContent = canPrestige ? `Открыть новую высоту (+0,5 → ×${(state.prestigeMult + .5).toFixed(1).replace('.', ',')})` : 'Открыть новую высоту';
+    }
+
+    function renderDevelopment() {
+      const panel = document.getElementById('developmentPanel');
+      panel.innerHTML = '';
+      UPGRADES.forEach(upgrade => {
+        const level = state.upgrades[upgrade.id] || 0;
+        const cost = getUpgradeCost(upgrade);
+        const maxed = level >= upgrade.maxLevel;
+        const item = document.createElement('button');
+        item.className = `upgrade${canBuy(upgrade) ? '' : ' disabled'}`;
+        item.disabled = !canBuy(upgrade);
+        item.innerHTML = `<span class="upgrade-code">${upgrade.code}</span><span><span class="upgrade-name">${upgrade.name}</span><span class="upgrade-desc">${upgrade.desc}</span><span class="upgrade-level">Уровень ${level}${maxed ? ' · максимум' : ''}</span></span><span class="upgrade-cost">${maxed ? 'ПОЛНОСТЬЮ' : `${formatNumber(cost)}<br>энергии`}</span>`;
+        if (!maxed) item.addEventListener('click', () => buyUpgrade(upgrade.id));
+        panel.appendChild(item);
+      });
     }
 
     function buyUpgrade(id) {
-      const u = UPGRADES.find(x => x.id === id);
-      if (!u || !canBuy(u)) return;
-
-      const cost = getUpgradeCost(u);
-      state.fish -= cost;
+      const upgrade = UPGRADES.find(item => item.id === id);
+      if (!upgrade || !canBuy(upgrade)) return;
+      state.energy -= getUpgradeCost(upgrade);
       state.upgrades[id]++;
-      recalculate();
-      playSound('buy');
-      renderShop();
-      updateUI();
-      save();
+      recalculate(); playSound('build'); renderDevelopment(); updateUI(); save();
     }
 
-    function getCurrentStage() {
-      let stage = STAGES[0];
-      for (let i = STAGES.length - 1; i >= 0; i--) {
-        if (state.totalFish >= STAGES[i].req) {
-          stage = STAGES[i];
-          break;
-        }
-      }
-      return stage;
-    }
-
-    function getNextStage() {
-      const current = getCurrentStage();
-      const idx = STAGES.findIndex(s => s.name === current.name);
-      return STAGES[idx + 1] || null;
-    }
-
-    function clickCat(e) {
-      initAudio();
-      let amount = state.clickPower;
-      let isCrit = Math.random() < 0.08; // 8% crit
-      if (isCrit) amount *= 5;
-
-      state.fish += amount;
-      state.totalFish += amount;
-
-      // Visual
-      const cat = document.getElementById('cat');
-      cat.classList.add('clicked');
-      setTimeout(() => cat.classList.remove('clicked'), 100);
-
-      // Floating text
-      const wrapper = document.getElementById('catWrapper');
-      const effect = document.createElement('div');
-      effect.className = 'click-effect';
-      effect.textContent = (isCrit ? 'КРИТ! ' : '') + '+' + formatNumber(amount);
-      if (isCrit) {
-        effect.style.color = '#ff4d6d';
-        effect.style.fontSize = '1.7rem';
-      }
-      const rect = wrapper.getBoundingClientRect();
-      const x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
-      const y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
-      effect.style.left = x + 'px';
-      effect.style.top = y + 'px';
-      wrapper.appendChild(effect);
-      setTimeout(() => effect.remove(), 900);
-
-      // Particles
-      for (let i = 0; i < 6; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = '50%';
-        p.style.top = '50%';
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 40 + Math.random() * 60;
-        p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
-        p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
-        document.getElementById('particles').appendChild(p);
-        setTimeout(() => p.remove(), 700);
-      }
-
-      playSound('click');
-
-      // Check evolution
-      const prevName = document.getElementById('stageName').textContent;
-      updateUI();
-      const newStage = getCurrentStage();
-      if (newStage.name !== prevName) {
-        playSound('evolve');
-        showToast('Эволюция! ' + newStage.name);
-      }
-
-      save();
-    }
-
-    // ==================== RENDER ====================
-    function updateUI() {
-      document.getElementById('fishDisplay').textContent = formatNumber(state.fish) + ' 🐟';
-      document.getElementById('perSecDisplay').textContent = formatNumber(state.perSec) + ' / сек';
-
-      const stage = getCurrentStage();
-      const catEl = document.getElementById('cat');
-      if (stage.img) {
-        catEl.innerHTML = `<img src="${stage.img}" alt="${stage.name}">`;
-      } else {
-        catEl.textContent = stage.emoji;
-      }
-      document.getElementById('stageName').textContent = stage.name;
-
-      const next = getNextStage();
-      if (next) {
-        const progress = (state.totalFish - stage.req) / (next.req - stage.req);
-        const pct = Math.min(100, Math.floor(progress * 100));
-        document.getElementById('evoFill').style.width = pct + '%';
-        document.getElementById('evoPercent').textContent = pct + '%';
-      } else {
-        document.getElementById('evoFill').style.width = '100%';
-        document.getElementById('evoPercent').textContent = 'MAX';
-      }
-
-      // Prestige
-      document.getElementById('prestigeMult').textContent = 'x' + state.prestigeMult.toFixed(2);
-      const canPrestige = state.totalFish >= 1000000;
-      const btn = document.getElementById('prestigeBtn');
-      btn.disabled = !canPrestige;
-      if (canPrestige) {
-        const nextMult = state.prestigeMult + 0.5;
-        btn.textContent = `Сделать престиж (+0.5x → x${nextMult.toFixed(1)})`;
-      } else {
-        btn.textContent = 'Сделать престиж (+0.5x)';
-      }
-    }
-
-    function renderShop() {
-      const panel = document.getElementById('shopPanel');
-      panel.innerHTML = '';
-
-      UPGRADES.forEach(u => {
-        const lvl = state.upgrades[u.id] || 0;
-        const cost = getUpgradeCost(u);
-        const maxed = lvl >= u.maxLevel;
-        const can = canBuy(u);
-
-        const div = document.createElement('div');
-        div.className = 'upgrade' + (can ? '' : ' disabled');
-        div.innerHTML = `
-          <div class="upgrade-icon">${u.icon}</div>
-          <div class="upgrade-info">
-            <div class="upgrade-name">${u.name}</div>
-            <div class="upgrade-desc">${u.desc}</div>
-            <div class="upgrade-level">Уровень: ${lvl}${maxed ? ' (MAX)' : ''}</div>
-          </div>
-          <div class="upgrade-cost">${maxed ? 'MAX' : formatNumber(cost) + ' 🐟'}</div>
-        `;
-        if (!maxed) {
-          div.onclick = () => buyUpgrade(u.id);
-        }
-        panel.appendChild(div);
-      });
-    }
-
-    // ==================== TABS ====================
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const name = tab.dataset.tab;
-        document.getElementById('shopPanel').style.display = name === 'shop' ? 'block' : 'none';
-        document.getElementById('prestigePanel').style.display = name === 'prestige' ? 'block' : 'none';
-      });
-    });
-
-    // ==================== PRESTIGE ====================
-    document.getElementById('prestigeBtn').onclick = () => {
-      if (state.totalFish < 1000000) return;
-      document.getElementById('newPrestigeMult').textContent = (state.prestigeMult + 0.5).toFixed(1);
-      document.getElementById('prestigeModal').classList.add('show');
-    };
-
-    document.getElementById('prestigeCancel').onclick = () => {
-      document.getElementById('prestigeModal').classList.remove('show');
-    };
-
-    document.getElementById('prestigeConfirm').onclick = () => {
-      state.prestigeMult += 0.5;
-      state.fish = 0;
-      state.totalFish = 0;
-      UPGRADES.forEach(u => state.upgrades[u.id] = 0);
-      recalculate();
-      playSound('prestige');
-      showToast('Престиж! Множитель x' + state.prestigeMult.toFixed(1));
-      document.getElementById('prestigeModal').classList.remove('show');
-      renderShop();
-      updateUI();
-      save();
-      setTimeout(() => showInterstitial(), 800);
-    };
-
-    // ==================== SAVE / LOAD ====================
     function save() {
       state.lastSave = Date.now();
-      localStorage.setItem('catEvolutionSave', JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       saveCloud();
     }
 
     function load() {
-      const raw = localStorage.getItem('catEvolutionSave');
+      const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       try {
         const data = JSON.parse(raw);
-        state = { ...state, ...data };
-        // Ensure all upgrades exist
-        UPGRADES.forEach(u => {
-          if (state.upgrades[u.id] === undefined) state.upgrades[u.id] = 0;
-        });
+        state = { ...state, ...data, upgrades: { ...state.upgrades, ...(data.upgrades || {}) } };
         recalculate();
-
-        // Offline earnings
         const now = Date.now();
-        const diff = Math.min(now - (state.lastSave || now), 1000 * 60 * 60 * 8); // max 8 hours
-        if (diff > 15000 && state.perSec > 0) {
-          const earned = (diff / 1000) * state.perSec * 0.5; // 50% efficiency offline
-          state.fish += earned;
-          state.totalFish += earned;
-          document.getElementById('offlineText').textContent =
-            `Кот наловил ${formatNumber(earned)} 🐟 пока тебя не было!`;
+        const difference = Math.min(now - (state.lastSave || now), 1000 * 60 * 60 * 8);
+        if (difference > 15000 && state.perSec > 0) {
+          const earned = (difference / 1000) * state.perSec * .5;
+          state.energy += earned; state.totalEnergy += earned;
+          document.getElementById('offlineText').textContent = `Город накопил ${formatNumber(earned)} энергии, пока вас не было.`;
           document.getElementById('offlineModal').classList.add('show');
         }
-      } catch (e) {
-        console.error('Load error', e);
-      }
+      } catch (error) { console.error('Ошибка загрузки сохранения', error); }
     }
-
-    document.getElementById('offlineOk').onclick = () => {
-      document.getElementById('offlineModal').classList.remove('show');
-      updateUI();
-      save();
-    };
-
-    // ==================== CONTROLS ====================
-    document.getElementById('catWrapper').addEventListener('click', clickCat);
-    document.getElementById('catWrapper').addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      clickCat(e);
-    }, { passive: false });
-
-    document.getElementById('adBtn').onclick = () => {
-      watchAdForFish();
-    };
-
-    document.getElementById('soundBtn').onclick = () => {
-      state.sound = !state.sound;
-      document.getElementById('soundBtn').textContent = state.sound ? '🔊 Звук' : '🔇 Звук';
-      if (state.sound) initAudio();
-      save();
-    };
-
-    document.getElementById('resetBtn').onclick = () => {
-      if (confirm('Точно сбросить весь прогресс?')) {
-        localStorage.removeItem('catEvolutionSave');
-        location.reload();
-      }
-    };
-
-    // ==================== GAME LOOP ====================
-    let lastTick = Date.now();
-    let isVisible = true;
-
-    document.addEventListener('visibilitychange', () => {
-      isVisible = !document.hidden;
-      if (isVisible) {
-        lastTick = Date.now(); // prevent huge jump
-      }
-    });
-
-    function gameLoop() {
-      const now = Date.now();
-      const dt = Math.min((now - lastTick) / 1000, 0.1); // cap dt
-      lastTick = now;
-
-      if (state.perSec > 0 && isVisible) {
-        const gain = state.perSec * dt;
-        state.fish += gain;
-        state.totalFish += gain;
-      }
-
-      updateUI();
-      requestAnimationFrame(gameLoop);
-    }
-
-    // Autosave
-    setInterval(save, 15000);
-
-    // ==================== YANDEX GAMES SDK ====================
-    let ysdk = null;
-    let player = null;
-    let lastInterstitial = 0;
-    const INTERSTITIAL_COOLDOWN = 90000; // 90 sec
 
     function initYandexSDK() {
-      if (typeof YaGames === 'undefined') {
-        console.log('YaGames SDK not found (local mode)');
-        return;
-      }
-
-      YaGames.init().then(_ysdk => {
-        ysdk = _ysdk;
-        console.log('Yandex SDK ready');
-
-        // Game Ready — обязательно
-        ysdk.features.LoadingAPI?.ready();
-
-        // Получаем игрока для облачного сохранения
-        ysdk.getPlayer({ scopes: false }).then(_player => {
-          player = _player;
-          console.log('Player ready, mode:', player.getMode());
-          loadCloudSave();
-        }).catch(err => {
-          console.log('Player error', err);
-        });
-
-        // Пауза звука при потере фокуса (требование)
-        ysdk.on('game_api_pause', () => {
-          // Можно поставить игру на паузу
-        });
-        ysdk.on('game_api_resume', () => {
-          lastTick = Date.now();
-        });
-
-      }).catch(err => {
-        console.log('SDK init error', err);
-      });
+      if (typeof YaGames === 'undefined') { console.log('Yandex Games SDK не найден в локальном режиме'); return; }
+      YaGames.init().then(sdk => {
+        ysdk = sdk; ysdk.features.LoadingAPI?.ready();
+        ysdk.getPlayer({ scopes: false }).then(currentPlayer => { player = currentPlayer; loadCloudSave(); }).catch(error => console.log('Не удалось получить игрока', error));
+        ysdk.on('game_api_resume', () => { lastTick = Date.now(); });
+      }).catch(error => console.log('Ошибка инициализации Yandex Games SDK', error));
     }
 
-    // --- Cloud Save ---
     function saveCloud() {
-      if (!player || player.getMode() === 'lite') {
-        // В lite-режиме только localStorage
-        return;
-      }
-      try {
-        const data = JSON.stringify(state);
-        player.setData({ catEvo: data }, true).then(() => {
-          console.log('Cloud save OK');
-        }).catch(e => console.log('Cloud save fail', e));
-      } catch (e) {}
+      if (!player || player.getMode() === 'lite') return;
+      try { player.setData({ tinySkyline: JSON.stringify(state) }, true).catch(error => console.log('Облачное сохранение недоступно', error)); } catch (error) { console.log('Ошибка облачного сохранения', error); }
     }
 
     function loadCloudSave() {
       if (!player || player.getMode() === 'lite') return;
-
-      player.getData(['catEvo']).then(data => {
-        if (data && data.catEvo) {
-          try {
-            const cloud = JSON.parse(data.catEvo);
-            // Берём более новый сейв
-            if (cloud.lastSave > (state.lastSave || 0)) {
-              state = { ...state, ...cloud };
-              UPGRADES.forEach(u => {
-                if (state.upgrades[u.id] === undefined) state.upgrades[u.id] = 0;
-              });
-              recalculate();
-              renderShop();
-              updateUI();
-              showToast('Прогресс загружен из облака');
-            }
-          } catch (e) {}
+      player.getData(['tinySkyline']).then(data => {
+        if (!data?.tinySkyline) return;
+        const cloud = JSON.parse(data.tinySkyline);
+        if (cloud.lastSave > (state.lastSave || 0)) {
+          state = { ...state, ...cloud, upgrades: { ...state.upgrades, ...(cloud.upgrades || {}) } };
+          recalculate(); renderDevelopment(); updateUI(); showToast('Прогресс загружен из облака');
         }
-      }).catch(e => console.log('Cloud load fail', e));
+      }).catch(error => console.log('Не удалось загрузить облачное сохранение', error));
     }
 
-    // --- Ads ---
     function showRewardedAd(onReward) {
-      if (!ysdk) {
-        // Локальный режим — сразу даём награду
-        if (onReward) onReward();
-        return;
-      }
-
-      ysdk.adv.showRewardedVideo({
-        callbacks: {
-          onOpen: () => {
-            // Пауза
-          },
-          onRewarded: () => {
-            if (onReward) onReward();
-          },
-          onClose: () => {
-            lastTick = Date.now();
-          },
-          onError: (e) => {
-            console.log('Rewarded error', e);
-            showToast('Реклама недоступна');
-          }
-        }
-      });
+      if (!ysdk) { onReward?.(); return; }
+      ysdk.adv.showRewardedVideo({ callbacks: {
+        onRewarded: () => onReward?.(),
+        onClose: () => { lastTick = Date.now(); },
+        onError: () => showToast('Грант пока недоступен')
+      }});
     }
 
     function showInterstitial() {
-      if (!ysdk) return;
-      const now = Date.now();
-      if (now - lastInterstitial < INTERSTITIAL_COOLDOWN) return;
-
-      ysdk.adv.showFullscreenAdv({
-        callbacks: {
-          onClose: (wasShown) => {
-            if (wasShown) lastInterstitial = Date.now();
-            lastTick = Date.now();
-          },
-          onError: (e) => console.log('Interstitial error', e)
-        }
-      });
+      if (!ysdk || Date.now() - lastInterstitial < INTERSTITIAL_COOLDOWN) return;
+      ysdk.adv.showFullscreenAdv({ callbacks: { onClose: shown => { if (shown) lastInterstitial = Date.now(); lastTick = Date.now(); }, onError: () => {} } });
     }
 
-    // Кнопка "Смотреть рекламу за рыбок"
-    function watchAdForFish() {
+    function watchGrant() {
       showRewardedAd(() => {
         const bonus = Math.max(50, Math.floor(state.perSec * 30 + state.clickPower * 20));
-        state.fish += bonus;
-        state.totalFish += bonus;
-        playSound('buy');
-        showToast('+' + formatNumber(bonus) + ' 🐟 за рекламу!');
-        updateUI();
-        save();
-        saveCloud();
+        state.energy += bonus; state.totalEnergy += bonus;
+        playSound('build'); updateUI(); renderDevelopment(); showToast(`+${formatNumber(bonus)} энергии по городскому гранту`); save();
       });
     }
 
-    // Периодически показываем interstitial (после важных действий)
-    function maybeShowInterstitial() {
-      // Показываем после престижа или каждые ~2-3 минуты активной игры
-      if (Math.random() < 0.3) showInterstitial();
+    function gameLoop() {
+      const now = Date.now();
+      const delta = Math.min((now - lastTick) / 1000, .1);
+      lastTick = now;
+      if (state.perSec > 0 && isVisible) { state.energy += state.perSec * delta; state.totalEnergy += state.perSec * delta; }
+      updateUI(); requestAnimationFrame(gameLoop);
     }
 
-    // ==================== START ====================
-    load();
-    recalculate();
-    renderShop();
-    updateUI();
-    gameLoop();
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      const isDevelopment = tab.dataset.tab === 'development';
+      document.querySelectorAll('.tab').forEach(item => { item.classList.toggle('active', item === tab); item.setAttribute('aria-selected', String(item === tab)); });
+      document.getElementById('developmentPanel').style.display = isDevelopment ? 'block' : 'none';
+      document.getElementById('altitudePanel').style.display = isDevelopment ? 'none' : 'block';
+    }));
+    document.getElementById('cityButton').addEventListener('click', chargeCity);
+    document.getElementById('cityButton').addEventListener('touchstart', event => { event.preventDefault(); chargeCity(event); }, { passive: false });
+    document.getElementById('offlineOk').addEventListener('click', () => { document.getElementById('offlineModal').classList.remove('show'); updateUI(); save(); });
+    document.getElementById('adBtn').addEventListener('click', watchGrant);
+    document.getElementById('soundBtn').addEventListener('click', () => { state.sound = !state.sound; document.getElementById('soundBtn').textContent = state.sound ? 'Звук: вкл.' : 'Звук: выкл.'; if (state.sound) initAudio(); save(); });
+    document.getElementById('resetBtn').addEventListener('click', () => { if (confirm('Сбросить развитие города? Прогресс текущего города будет удалён.')) { localStorage.removeItem(STORAGE_KEY); location.reload(); } });
+    document.getElementById('prestigeBtn').addEventListener('click', () => { if (state.totalEnergy >= 1000000) { document.getElementById('newPrestigeMult').textContent = `×${(state.prestigeMult + .5).toFixed(2).replace('.', ',')}`; document.getElementById('prestigeModal').classList.add('show'); } });
+    document.getElementById('prestigeCancel').addEventListener('click', () => document.getElementById('prestigeModal').classList.remove('show'));
+    document.getElementById('prestigeConfirm').addEventListener('click', () => {
+      state.prestigeMult += .5; state.energy = 0; state.totalEnergy = 0; UPGRADES.forEach(upgrade => state.upgrades[upgrade.id] = 0);
+      recalculate(); playSound('altitude'); document.getElementById('prestigeModal').classList.remove('show'); renderDevelopment(); updateUI(); showToast(`Новая высота открыта! Коэффициент ×${state.prestigeMult.toFixed(1).replace('.', ',')}`); save(); setTimeout(showInterstitial, 800);
+    });
+    document.addEventListener('visibilitychange', () => { isVisible = !document.hidden; if (isVisible) lastTick = Date.now(); });
+    document.addEventListener('contextmenu', event => event.preventDefault());
 
-    // Try init SDK after short delay
-    setTimeout(initYandexSDK, 300);
-
-    // Prevent context menu and zoom
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.addEventListener('gesturestart', e => e.preventDefault());
+    load(); recalculate(); renderDevelopment(); updateUI(); gameLoop(); setTimeout(initYandexSDK, 300); setInterval(save, 15000);
   </script>
 </body>
 </html>
