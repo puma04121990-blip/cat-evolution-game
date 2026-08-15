@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Эволюция Кота</title>
+  <!-- Yandex Games SDK -->
+  <script src="/sdk.js"></script>
+  <style>
+    :root {
+      --bg1: #1a0b2e;
+      --bg2: #2d1b4e;
+      --accent: #ff6b9d;
+      --accent2: #c44569;
+      --gold: #ffd93d;
+      --text: #fff8f0;
+      --card: rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      height: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #1a0b2e 0%, #2d1b4e 50%, #1a0b2e 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100%;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    .game-container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px;
+      margin-bottom: 8px;
+    }
+
+    .title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ff6b9d, #ffd93d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stats {
+      text-align: right;
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .fish-count {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .per-sec {
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    /* Cat area */
+    .cat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      min-height: 280px;
+      margin: 10px 0;
+    }
+
+    .cat-stage-name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.85;
+      text-align: center;
+    }
+
+    .cat-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .cat {
+      font-size: 140px;
+      line-height: 1;
+      transition: transform 0.1s ease;
+      filter: drop-shadow(0 8px 20px rgba(255,107,157,0.4));
+      animation: float 3s ease-in-out infinite;
+      width: 180px;
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      object-fit: contain;
+      border-radius: 24px;
+    }
+
+    .cat img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    .cat:active, .cat.clicked {
+      transform: scale(0.92);
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .click-effect {
+      position: absolute;
+      pointer-events: none;
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: var(--gold);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      animation: floatUp 0.9s ease-out forwards;
+      z-index: 10;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+    }
+
+    .particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: particle 0.7s ease-out forwards;
+    }
+
+    @keyframes particle {
+      0% { opacity: 1; transform: translate(0,0) scale(1); }
+      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+    }
+
+    /* Evolution progress */
+    .evo-bar-container {
+      width: 100%;
+      max-width: 280px;
+      margin-top: 16px;
+    }
+
+    .evo-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      margin-bottom: 4px;
+      opacity: 0.8;
+    }
+
+    .evo-bar {
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .evo-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b9d, #ffd93d);
+      border-radius: 20px;
+      transition: width 0.3s ease;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin: 12px 0 8px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-color: transparent;
+      box-shadow: 0 4px 15px rgba(255,107,157,0.4);
+    }
+
+    /* Shop */
+    .shop {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 340px;
+      padding-right: 4px;
+    }
+
+    .shop::-webkit-scrollbar {
+      width: 4px;
+    }
+    .shop::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+    }
+
+    .upgrade {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .upgrade:active {
+      transform: scale(0.98);
+    }
+
+    .upgrade.disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .upgrade-icon {
+      font-size: 2rem;
+      width: 48px;
+      text-align: center;
+    }
+
+    .upgrade-info {
+      flex: 1;
+    }
+
+    .upgrade-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .upgrade-desc {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 2px;
+    }
+
+    .upgrade-level {
+      font-size: 0.7rem;
+      color: var(--gold);
+      margin-top: 2px;
+    }
+
+    .upgrade-cost {
+      font-weight: 700;
+      color: var(--gold);
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    /* Prestige panel */
+    .prestige-panel {
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .prestige-btn {
+      background: linear-gradient(135deg, #9b59b6, #8e44ad);
+      border: none;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 16px;
+      box-shadow: 0 6px 20px rgba(155,89,182,0.4);
+    }
+
+    .prestige-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Footer */
+    .footer {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      padding: 10px 0 4px;
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    .footer button {
+      background: none;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(145deg, #2d1b4e, #1a0b2e);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 340px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin-bottom: 12px;
+      color: var(--gold);
+    }
+
+    .modal p {
+      margin-bottom: 16px;
+      line-height: 1.5;
+      opacity: 0.9;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .modal-btn {
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: white;
+    }
+
+    .modal-btn.secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(0,0,0,0.85);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 600;
+      z-index: 200;
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Offline earnings */
+    .offline-popup {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="header">
+      <div class="title">🐱 Эволюция Кота</div>
+      <div class="stats">
+        <div class="fish-count" id="fishDisplay">0 🐟</div>
+        <div class="per-sec" id="perSecDisplay">0 / сек</div>
+      </div>
+    </div>
+
+    <div class="cat-area">
+      <div class="cat-stage-name" id="stageName">Котёнок</div>
+      <div class="cat-wrapper" id="catWrapper">
+        <div class="cat" id="cat">🐱</div>
+        <div class="particles" id="particles"></div>
+      </div>
+      <div class="evo-bar-container">
+        <div class="evo-label">
+          <span>Эволюция</span>
+          <span id="evoPercent">0%</span>
+        </div>
+        <div class="evo-bar">
+          <div class="evo-fill" id="evoFill" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="shop">Улучшения</div>
+      <div class="tab" data-tab="prestige">Престиж</div>
+    </div>
+
+    <div class="shop" id="shopPanel"></div>
+
+    <div class="prestige-panel" id="prestigePanel" style="display:none">
+      <div style="font-size: 3rem; margin-bottom: 8px;">👑</div>
+      <h3>Престиж</h3>
+      <p style="opacity:0.8; font-size:0.9rem; margin: 10px 0;">
+        Сбросить прогресс и получить постоянный множитель ко всем доходам.
+      </p>
+      <div style="margin: 12px 0; font-size: 1.1rem;">
+        Текущий множитель: <span id="prestigeMult" style="color:var(--gold); font-weight:700;">x1.00</span>
+      </div>
+      <div style="margin-bottom: 8px; opacity:0.7; font-size:0.85rem;">
+        Нужно минимум 1 000 000 🐟 для престижа
+      </div>
+      <button class="prestige-btn" id="prestigeBtn" disabled>Сделать престиж (+0.5x)</button>
+    </div>
+
+    <div class="footer">
+      <button id="adBtn">🎬 +Рыбки</button>
+      <button id="soundBtn">🔊 Звук</button>
+      <button id="resetBtn">Сброс</button>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="offlineModal">
+    <div class="modal-content">
+      <h2>Пока тебя не было...</h2>
+      <p id="offlineText">Кот наловил рыбок!</p>
+      <div class="modal-buttons">
+        <button class="modal-btn primary" id="offlineOk">Забрать</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="prestigeModal">
+    <div class="modal-content">
+      <h2>Престиж?</h2>
+      <p>Весь прогресс будет сброшен, но ты получишь постоянный множитель x<span id="newPrestigeMult">1.5</span> ко всем доходам.</p>
+      <div class="modal-buttons">
+        <button class="modal-btn secondary" id="prestigeCancel">Отмена</button>
+        <button class="modal-btn primary" id="prestigeConfirm">Престиж!</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ==================== GAME DATA ====================
+    const STAGES = [
+      { name: "Котёнок", emoji: "🐱", img: "assets/cat1.jpg", req: 0 },
+      { name: "Домашний кот", emoji: "😺", img: null, req: 500 },
+      { name: "Толстый кот", emoji: "😸", img: "assets/cat2.jpg", req: 5000 },
+      { name: "Кот-джентльмен", emoji: "😼", img: null, req: 25000 },
+      { name: "Королевский кот", emoji: "👑", img: "assets/cat3.jpg", req: 100000 },
+      { name: "Ниндзя-кот", emoji: "🥷", img: "assets/cat4.jpg", req: 500000 },
+      { name: "Космический кот", emoji: "🚀", img: "assets/cat5.jpg", req: 2000000 },
+      { name: "Божественный кот", emoji: "✨", img: "assets/cat6.jpg", req: 10000000 },
+      { name: "Легендарный кот", emoji: "🌟", img: "assets/cat7.jpg", req: 50000000 },
+      { name: "Абсолютный кот", emoji: "♾️", img: "assets/cat8.jpg", req: 250000000 }
+    ];
+
+    const UPGRADES = [
+      {
+        id: "claw",
+        name: "Острые когти",
+        icon: "🐾",
+        desc: "+1 сила клика",
+        baseCost: 15,
+        costMult: 1.15,
+        effect: (lvl) => ({ clickPower: lvl }),
+        maxLevel: 100
+      },
+      {
+        id: "bowl",
+        name: "Миска с едой",
+        icon: "🥣",
+        desc: "+0.5 рыбки/сек",
+        baseCost: 50,
+        costMult: 1.18,
+        effect: (lvl) => ({ perSec: lvl * 0.5 }),
+        maxLevel: 100
+      },
+      {
+        id: "friend",
+        name: "Кот-друг",
+        icon: "🐈",
+        desc: "+3 рыбки/сек",
+        baseCost: 300,
+        costMult: 1.22,
+        effect: (lvl) => ({ perSec: lvl * 3 }),
+        maxLevel: 50
+      },
+      {
+        id: "farm",
+        name: "Рыбная ферма",
+        icon: "🐟",
+        desc: "+15 рыбок/сек",
+        baseCost: 2000,
+        costMult: 1.25,
+        effect: (lvl) => ({ perSec: lvl * 15 }),
+        maxLevel: 40
+      },
+      {
+        id: "factory",
+        name: "Завод рыбок",
+        icon: "🏭",
+        desc: "+80 рыбок/сек",
+        baseCost: 15000,
+        costMult: 1.28,
+        effect: (lvl) => ({ perSec: lvl * 80 }),
+        maxLevel: 30
+      },
+      {
+        id: "multiplier",
+        name: "Золотая лапка",
+        icon: "✨",
+        desc: "x1.5 ко всем доходам",
+        baseCost: 50000,
+        costMult: 2.5,
+        effect: (lvl) => ({ mult: Math.pow(1.5, lvl) }),
+        maxLevel: 10
+      },
+      {
+        id: "mega",
+        name: "Мега-клик",
+        icon: "💥",
+        desc: "+25 сила клика",
+        baseCost: 100000,
+        costMult: 1.35,
+        effect: (lvl) => ({ clickPower: lvl * 25 }),
+        maxLevel: 50
+      },
+      {
+        id: "empire",
+        name: "Кошачья империя",
+        icon: "🏰",
+        desc: "+500 рыбок/сек",
+        baseCost: 500000,
+        costMult: 1.4,
+        effect: (lvl) => ({ perSec: lvl * 500 }),
+        maxLevel: 20
+      }
+    ];
+
+    // ==================== STATE ====================
+    let state = {
+      fish: 0,
+      totalFish: 0,
+      clickPower: 1,
+      perSec: 0,
+      mult: 1,
+      prestigeMult: 1,
+      upgrades: {},
+      lastSave: Date.now(),
+      sound: true
+    };
+
+    // Init upgrades levels
+    UPGRADES.forEach(u => state.upgrades[u.id] = 0);
+
+    // ==================== AUDIO ====================
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!state.sound || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'click') {
+        osc.frequency.value = 600 + Math.random() * 200;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } else if (type === 'buy') {
+        osc.frequency.value = 400;
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+      } else if (type === 'evolve') {
+        osc.type = 'triangle';
+        osc.frequency.value = 300;
+        osc.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.5);
+      } else if (type === 'prestige') {
+        osc.type = 'sawtooth';
+        osc.frequency.value = 200;
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.6);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.7);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.7);
+      }
+    }
+
+    // ==================== UTILS ====================
+    function formatNumber(n) {
+      if (n < 1000) return Math.floor(n).toString();
+      if (n < 1e6) return (n / 1e3).toFixed(1) + 'K';
+      if (n < 1e9) return (n / 1e6).toFixed(2) + 'M';
+      if (n < 1e12) return (n / 1e9).toFixed(2) + 'B';
+      return (n / 1e12).toFixed(2) + 'T';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ==================== CORE LOGIC ====================
+    function recalculate() {
+      let clickPower = 1;
+      let perSec = 0;
+      let mult = 1;
+
+      UPGRADES.forEach(u => {
+        const lvl = state.upgrades[u.id] || 0;
+        if (lvl > 0) {
+          const eff = u.effect(lvl);
+          if (eff.clickPower) clickPower += eff.clickPower;
+          if (eff.perSec) perSec += eff.perSec;
+          if (eff.mult) mult *= eff.mult;
+        }
+      });
+
+      state.clickPower = clickPower * state.prestigeMult * mult;
+      state.perSec = perSec * state.prestigeMult * mult;
+      state.mult = mult;
+    }
+
+    function getUpgradeCost(u) {
+      const lvl = state.upgrades[u.id] || 0;
+      return Math.floor(u.baseCost * Math.pow(u.costMult, lvl));
+    }
+
+    function canBuy(u) {
+      const lvl = state.upgrades[u.id] || 0;
+      if (lvl >= u.maxLevel) return false;
+      return state.fish >= getUpgradeCost(u);
+    }
+
+    function buyUpgrade(id) {
+      const u = UPGRADES.find(x => x.id === id);
+      if (!u || !canBuy(u)) return;
+
+      const cost = getUpgradeCost(u);
+      state.fish -= cost;
+      state.upgrades[id]++;
+      recalculate();
+      playSound('buy');
+      renderShop();
+      updateUI();
+      save();
+    }
+
+    function getCurrentStage() {
+      let stage = STAGES[0];
+      for (let i = STAGES.length - 1; i >= 0; i--) {
+        if (state.totalFish >= STAGES[i].req) {
+          stage = STAGES[i];
+          break;
+        }
+      }
+      return stage;
+    }
+
+    function getNextStage() {
+      const current = getCurrentStage();
+      const idx = STAGES.findIndex(s => s.name === current.name);
+      return STAGES[idx + 1] || null;
+    }
+
+    function clickCat(e) {
+      initAudio();
+      let amount = state.clickPower;
+      let isCrit = Math.random() < 0.08; // 8% crit
+      if (isCrit) amount *= 5;
+
+      state.fish += amount;
+      state.totalFish += amount;
+
+      // Visual
+      const cat = document.getElementById('cat');
+      cat.classList.add('clicked');
+      setTimeout(() => cat.classList.remove('clicked'), 100);
+
+      // Floating text
+      const wrapper = document.getElementById('catWrapper');
+      const effect = document.createElement('div');
+      effect.className = 'click-effect';
+      effect.textContent = (isCrit ? 'КРИТ! ' : '') + '+' + formatNumber(amount);
+      if (isCrit) {
+        effect.style.color = '#ff4d6d';
+        effect.style.fontSize = '1.7rem';
+      }
+      const rect = wrapper.getBoundingClientRect();
+      const x = (e.clientX || e.touches?.[0]?.clientX || rect.left + rect.width/2) - rect.left;
+      const y = (e.clientY || e.touches?.[0]?.clientY || rect.top + rect.height/2) - rect.top;
+      effect.style.left = x + 'px';
+      effect.style.top = y + 'px';
+      wrapper.appendChild(effect);
+      setTimeout(() => effect.remove(), 900);
+
+      // Particles
+      for (let i = 0; i < 6; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = '50%';
+        p.style.top = '50%';
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 40 + Math.random() * 60;
+        p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+        p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+        document.getElementById('particles').appendChild(p);
+        setTimeout(() => p.remove(), 700);
+      }
+
+      playSound('click');
+
+      // Check evolution
+      const prevName = document.getElementById('stageName').textContent;
+      updateUI();
+      const newStage = getCurrentStage();
+      if (newStage.name !== prevName) {
+        playSound('evolve');
+        showToast('Эволюция! ' + newStage.name);
+      }
+
+      save();
+    }
+
+    // ==================== RENDER ====================
+    function updateUI() {
+      document.getElementById('fishDisplay').textContent = formatNumber(state.fish) + ' 🐟';
+      document.getElementById('perSecDisplay').textContent = formatNumber(state.perSec) + ' / сек';
+
+      const stage = getCurrentStage();
+      const catEl = document.getElementById('cat');
+      if (stage.img) {
+        catEl.innerHTML = `<img src="${stage.img}" alt="${stage.name}">`;
+      } else {
+        catEl.textContent = stage.emoji;
+      }
+      document.getElementById('stageName').textContent = stage.name;
+
+      const next = getNextStage();
+      if (next) {
+        const progress = (state.totalFish - stage.req) / (next.req - stage.req);
+        const pct = Math.min(100, Math.floor(progress * 100));
+        document.getElementById('evoFill').style.width = pct + '%';
+        document.getElementById('evoPercent').textContent = pct + '%';
+      } else {
+        document.getElementById('evoFill').style.width = '100%';
+        document.getElementById('evoPercent').textContent = 'MAX';
+      }
+
+      // Prestige
+      document.getElementById('prestigeMult').textContent = 'x' + state.prestigeMult.toFixed(2);
+      const canPrestige = state.totalFish >= 1000000;
+      const btn = document.getElementById('prestigeBtn');
+      btn.disabled = !canPrestige;
+      if (canPrestige) {
+        const nextMult = state.prestigeMult + 0.5;
+        btn.textContent = `Сделать престиж (+0.5x → x${nextMult.toFixed(1)})`;
+      } else {
+        btn.textContent = 'Сделать престиж (+0.5x)';
+      }
+    }
+
+    function renderShop() {
+      const panel = document.getElementById('shopPanel');
+      panel.innerHTML = '';
+
+      UPGRADES.forEach(u => {
+        const lvl = state.upgrades[u.id] || 0;
+        const cost = getUpgradeCost(u);
+        const maxed = lvl >= u.maxLevel;
+        const can = canBuy(u);
+
+        const div = document.createElement('div');
+        div.className = 'upgrade' + (can ? '' : ' disabled');
+        div.innerHTML = `
+          <div class="upgrade-icon">${u.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${u.name}</div>
+            <div class="upgrade-desc">${u.desc}</div>
+            <div class="upgrade-level">Уровень: ${lvl}${maxed ? ' (MAX)' : ''}</div>
+          </div>
+          <div class="upgrade-cost">${maxed ? 'MAX' : formatNumber(cost) + ' 🐟'}</div>
+        `;
+        if (!maxed) {
+          div.onclick = () => buyUpgrade(u.id);
+        }
+        panel.appendChild(div);
+      });
+    }
+
+    // ==================== TABS ====================
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const name = tab.dataset.tab;
+        document.getElementById('shopPanel').style.display = name === 'shop' ? 'block' : 'none';
+        document.getElementById('prestigePanel').style.display = name === 'prestige' ? 'block' : 'none';
+      });
+    });
+
+    // ==================== PRESTIGE ====================
+    document.getElementById('prestigeBtn').onclick = () => {
+      if (state.totalFish < 1000000) return;
+      document.getElementById('newPrestigeMult').textContent = (state.prestigeMult + 0.5).toFixed(1);
+      document.getElementById('prestigeModal').classList.add('show');
+    };
+
+    document.getElementById('prestigeCancel').onclick = () => {
+      document.getElementById('prestigeModal').classList.remove('show');
+    };
+
+    document.getElementById('prestigeConfirm').onclick = () => {
+      state.prestigeMult += 0.5;
+      state.fish = 0;
+      state.totalFish = 0;
+      UPGRADES.forEach(u => state.upgrades[u.id] = 0);
+      recalculate();
+      playSound('prestige');
+      showToast('Престиж! Множитель x' + state.prestigeMult.toFixed(1));
+      document.getElementById('prestigeModal').classList.remove('show');
+      renderShop();
+      updateUI();
+      save();
+      setTimeout(() => showInterstitial(), 800);
+    };
+
+    // ==================== SAVE / LOAD ====================
+    function save() {
+      state.lastSave = Date.now();
+      localStorage.setItem('catEvolutionSave', JSON.stringify(state));
+      saveCloud();
+    }
+
+    function load() {
+      const raw = localStorage.getItem('catEvolutionSave');
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        state = { ...state, ...data };
+        // Ensure all upgrades exist
+        UPGRADES.forEach(u => {
+          if (state.upgrades[u.id] === undefined) state.upgrades[u.id] = 0;
+        });
+        recalculate();
+
+        // Offline earnings
+        const now = Date.now();
+        const diff = Math.min(now - (state.lastSave || now), 1000 * 60 * 60 * 8); // max 8 hours
+        if (diff > 15000 && state.perSec > 0) {
+          const earned = (diff / 1000) * state.perSec * 0.5; // 50% efficiency offline
+          state.fish += earned;
+          state.totalFish += earned;
+          document.getElementById('offlineText').textContent =
+            `Кот наловил ${formatNumber(earned)} 🐟 пока тебя не было!`;
+          document.getElementById('offlineModal').classList.add('show');
+        }
+      } catch (e) {
+        console.error('Load error', e);
+      }
+    }
+
+    document.getElementById('offlineOk').onclick = () => {
+      document.getElementById('offlineModal').classList.remove('show');
+      updateUI();
+      save();
+    };
+
+    // ==================== CONTROLS ====================
+    document.getElementById('catWrapper').addEventListener('click', clickCat);
+    document.getElementById('catWrapper').addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      clickCat(e);
+    }, { passive: false });
+
+    document.getElementById('adBtn').onclick = () => {
+      watchAdForFish();
+    };
+
+    document.getElementById('soundBtn').onclick = () => {
+      state.sound = !state.sound;
+      document.getElementById('soundBtn').textContent = state.sound ? '🔊 Звук' : '🔇 Звук';
+      if (state.sound) initAudio();
+      save();
+    };
+
+    document.getElementById('resetBtn').onclick = () => {
+      if (confirm('Точно сбросить весь прогресс?')) {
+        localStorage.removeItem('catEvolutionSave');
+        location.reload();
+      }
+    };
+
+    // ==================== GAME LOOP ====================
+    let lastTick = Date.now();
+    let isVisible = true;
+
+    document.addEventListener('visibilitychange', () => {
+      isVisible = !document.hidden;
+      if (isVisible) {
+        lastTick = Date.now(); // prevent huge jump
+      }
+    });
+
+    function gameLoop() {
+      const now = Date.now();
+      const dt = Math.min((now - lastTick) / 1000, 0.1); // cap dt
+      lastTick = now;
+
+      if (state.perSec > 0 && isVisible) {
+        const gain = state.perSec * dt;
+        state.fish += gain;
+        state.totalFish += gain;
+      }
+
+      updateUI();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Autosave
+    setInterval(save, 15000);
+
+    // ==================== YANDEX GAMES SDK ====================
+    let ysdk = null;
+    let player = null;
+    let lastInterstitial = 0;
+    const INTERSTITIAL_COOLDOWN = 90000; // 90 sec
+
+    function initYandexSDK() {
+      if (typeof YaGames === 'undefined') {
+        console.log('YaGames SDK not found (local mode)');
+        return;
+      }
+
+      YaGames.init().then(_ysdk => {
+        ysdk = _ysdk;
+        console.log('Yandex SDK ready');
+
+        // Game Ready — обязательно
+        ysdk.features.LoadingAPI?.ready();
+
+        // Получаем игрока для облачного сохранения
+        ysdk.getPlayer({ scopes: false }).then(_player => {
+          player = _player;
+          console.log('Player ready, mode:', player.getMode());
+          loadCloudSave();
+        }).catch(err => {
+          console.log('Player error', err);
+        });
+
+        // Пауза звука при потере фокуса (требование)
+        ysdk.on('game_api_pause', () => {
+          // Можно поставить игру на паузу
+        });
+        ysdk.on('game_api_resume', () => {
+          lastTick = Date.now();
+        });
+
+      }).catch(err => {
+        console.log('SDK init error', err);
+      });
+    }
+
+    // --- Cloud Save ---
+    function saveCloud() {
+      if (!player || player.getMode() === 'lite') {
+        // В lite-режиме только localStorage
+        return;
+      }
+      try {
+        const data = JSON.stringify(state);
+        player.setData({ catEvo: data }, true).then(() => {
+          console.log('Cloud save OK');
+        }).catch(e => console.log('Cloud save fail', e));
+      } catch (e) {}
+    }
+
+    function loadCloudSave() {
+      if (!player || player.getMode() === 'lite') return;
+
+      player.getData(['catEvo']).then(data => {
+        if (data && data.catEvo) {
+          try {
+            const cloud = JSON.parse(data.catEvo);
+            // Берём более новый сейв
+            if (cloud.lastSave > (state.lastSave || 0)) {
+              state = { ...state, ...cloud };
+              UPGRADES.forEach(u => {
+                if (state.upgrades[u.id] === undefined) state.upgrades[u.id] = 0;
+              });
+              recalculate();
+              renderShop();
+              updateUI();
+              showToast('Прогресс загружен из облака');
+            }
+          } catch (e) {}
+        }
+      }).catch(e => console.log('Cloud load fail', e));
+    }
+
+    // --- Ads ---
+    function showRewardedAd(onReward) {
+      if (!ysdk) {
+        // Локальный режим — сразу даём награду
+        if (onReward) onReward();
+        return;
+      }
+
+      ysdk.adv.showRewardedVideo({
+        callbacks: {
+          onOpen: () => {
+            // Пауза
+          },
+          onRewarded: () => {
+            if (onReward) onReward();
+          },
+          onClose: () => {
+            lastTick = Date.now();
+          },
+          onError: (e) => {
+            console.log('Rewarded error', e);
+            showToast('Реклама недоступна');
+          }
+        }
+      });
+    }
+
+    function showInterstitial() {
+      if (!ysdk) return;
+      const now = Date.now();
+      if (now - lastInterstitial < INTERSTITIAL_COOLDOWN) return;
+
+      ysdk.adv.showFullscreenAdv({
+        callbacks: {
+          onClose: (wasShown) => {
+            if (wasShown) lastInterstitial = Date.now();
+            lastTick = Date.now();
+          },
+          onError: (e) => console.log('Interstitial error', e)
+        }
+      });
+    }
+
+    // Кнопка "Смотреть рекламу за рыбок"
+    function watchAdForFish() {
+      showRewardedAd(() => {
+        const bonus = Math.max(50, Math.floor(state.perSec * 30 + state.clickPower * 20));
+        state.fish += bonus;
+        state.totalFish += bonus;
+        playSound('buy');
+        showToast('+' + formatNumber(bonus) + ' 🐟 за рекламу!');
+        updateUI();
+        save();
+        saveCloud();
+      });
+    }
+
+    // Периодически показываем interstitial (после важных действий)
+    function maybeShowInterstitial() {
+      // Показываем после престижа или каждые ~2-3 минуты активной игры
+      if (Math.random() < 0.3) showInterstitial();
+    }
+
+    // ==================== START ====================
+    load();
+    recalculate();
+    renderShop();
+    updateUI();
+    gameLoop();
+
+    // Try init SDK after short delay
+    setTimeout(initYandexSDK, 300);
+
+    // Prevent context menu and zoom
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('gesturestart', e => e.preventDefault());
+  </script>
+</body>
+</html>
