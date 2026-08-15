@@ -2,529 +2,239 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#EAF7FF">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#e6f6ff">
+  <meta name="description" content="Город в облаках — уютная idle-игра о развитии небесной столицы.">
   <title>Город в облаках</title>
-  <script src="/sdk.js"></script>
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <style>
-    /* TINY SKYLINE — светлый 2.5D-город в облаках: небесный голубой, тёплый белый, сады и сигнальный оранжевый. */
+    /* TINY SKYLINE SHOWCASE — светлый 2.5D-кликер: крупный объект, два сценария компоновки и контрастные состояния действий. */
     :root {
-      --sky: #eaf7ff;
-      --sky-deep: #bedff0;
-      --paper: #fffdf8;
-      --ink: #173442;
-      --muted: #6d8490;
-      --line: #c9e1ed;
-      --blue: #258cc8;
-      --blue-dark: #176b9a;
-      --green: #3eaa72;
-      --orange: #ff9c45;
-      --yellow: #ffd46c;
-      --card: rgba(255, 253, 248, .88);
-      --shadow: 0 18px 42px rgba(35, 107, 137, .14);
+      --sky-0: #f9feff; --sky-1: #e8f8ff; --sky-2: #c7eafa;
+      --paper: #fffefa; --ink: #173b4a; --ink-soft: #507280; --line: #bfdfeb;
+      --blue: #187cb2; --blue-bright: #36b4e5; --green: #37a96b;
+      --orange: #fb9444; --yellow: #ffd36a; --red: #d95e55;
+      --card: rgba(255, 254, 250, .86); --shadow: 0 18px 42px rgba(24, 105, 140, .15);
+      --radius: 22px; --ease-out: cubic-bezier(.23, 1, .32, 1);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { min-height: 100%; overscroll-behavior: none; }
-    body {
-      min-height: 100vh;
-      background: linear-gradient(160deg, #f8fdff 0%, var(--sky) 53%, #d7eff8 100%);
-      color: var(--ink);
-      font-family: "Trebuchet MS", "Arial", sans-serif;
-      overflow-x: hidden;
-      touch-action: manipulation;
+    html { min-height: 100%; background: var(--sky-1); }
+    body { min-width: 320px; min-height: 100dvh; overflow-x: hidden; color: var(--ink); background: linear-gradient(155deg, var(--sky-0), var(--sky-1) 54%, #d9f1fb); font-family: "Trebuchet MS", Arial, sans-serif; touch-action: manipulation; }
+    button { font: inherit; } button, [role="button"] { -webkit-user-select: none; user-select: none; } [hidden] { display: none !important; }
+    button:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+
+    .game-shell { width: min(100%, 1180px); min-height: 100dvh; margin: 0 auto; padding: max(12px, env(safe-area-inset-top)) clamp(12px, 2.4vw, 30px) max(14px, env(safe-area-inset-bottom)); position: relative; }
+    .game-shell::before, .game-shell::after { content: ""; z-index: -1; position: fixed; width: 32vmax; height: 32vmax; border-radius: 50%; pointer-events: none; }
+    .game-shell::before { top: -18vmax; right: -12vmax; background: rgba(255, 211, 106, .24); }
+    .game-shell::after { left: -17vmax; bottom: -20vmax; background: rgba(55, 169, 107, .13); }
+
+    .topbar { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 2px 12px; }
+    .brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .brand-mark { width: 33px; height: 33px; flex: 0 0 auto; position: relative; display: grid; place-items: center; }
+    .brand-mark::before { content: ""; width: 28px; height: 12px; border: 2px solid var(--blue); border-radius: 50%; transform: rotate(-20deg); }
+    .brand-mark::after { content: ""; position: absolute; width: 8px; height: 8px; top: 2px; right: 0; border-radius: 50%; background: var(--orange); box-shadow: -17px 16px 0 #76ceef; }
+    .brand-name { font-size: 16px; line-height: .9; font-weight: 900; letter-spacing: -.055em; text-transform: uppercase; }
+    .brand-tag { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 8px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .platform-note { padding: 7px 9px; border: 1px solid rgba(24,124,178,.25); color: var(--blue); background: rgba(255,255,255,.48); font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+    .quick-controls { display: flex; gap: 5px; }
+    .icon-button { min-width: 37px; min-height: 37px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; color: var(--ink-soft); background: rgba(255,255,255,.64); cursor: pointer; font-size: 15px; transition: transform .16s var(--ease-out), color .16s, border-color .16s, background .16s; }
+    .icon-button:hover { color: var(--blue); border-color: var(--blue); background: #fff; transform: translateY(-1px); }
+    .icon-button:active { transform: scale(.94); }
+    .icon-button.off { color: #9aabb1; background: rgba(238,245,247,.72); }
+
+    .notice { z-index: 30; position: fixed; top: max(12px, env(safe-area-inset-top)); left: 50%; width: min(calc(100vw - 26px), 470px); padding: 11px 16px; border: 1px solid rgba(23,59,74,.16); border-radius: 14px; color: var(--paper); background: var(--ink); box-shadow: 0 14px 34px rgba(15,57,75,.26); font-size: 13px; font-weight: 800; text-align: center; transform: translate(-50%, -130%); transition: transform .32s var(--ease-out); pointer-events: none; }
+    .notice.show { transform: translate(-50%, 0); }
+    .notice.warn { background: #9b5b24; } .notice.success { background: #176c65; }
+
+    .game-layout { display: grid; gap: 12px; }
+    .city-column, .control-column { min-width: 0; }
+    .resource-card { display: flex; align-items: end; justify-content: space-between; gap: 12px; min-height: 84px; padding: 14px 16px; border: 1px solid rgba(24,124,178,.2); border-radius: var(--radius); background: var(--card); box-shadow: 0 9px 25px rgba(33,118,153,.09); }
+    .eyebrow { color: var(--ink-soft); font-size: 10px; font-weight: 900; letter-spacing: .115em; text-transform: uppercase; }
+    .energy-value { margin-top: 4px; color: var(--blue); font-size: clamp(30px, 8vw, 42px); font-weight: 900; letter-spacing: -.075em; line-height: .94; }
+    .energy-unit { color: var(--ink-soft); font-size: 12px; letter-spacing: -.02em; }
+    .rate { color: var(--ink-soft); font-size: 11px; line-height: 1.28; text-align: right; }
+    .rate strong { display: block; color: var(--green); font-size: 15px; letter-spacing: -.04em; }
+
+    .stage-card { min-height: 326px; margin-top: 12px; padding: 16px; overflow: hidden; position: relative; border: 1px solid rgba(24,124,178,.2); border-radius: var(--radius); background: linear-gradient(152deg, rgba(255,255,255,.92), rgba(210,239,250,.9)); box-shadow: var(--shadow); }
+    .stage-card::before { content: ""; position: absolute; top: 23px; left: -40px; width: 164px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.77); box-shadow: 312px 56px 0 rgba(255,255,255,.72), 184px 154px 0 12px rgba(255,255,255,.34); }
+    .stage-card::after { content: ""; position: absolute; top: 20px; right: 24px; width: 70px; height: 70px; border: 1px dashed rgba(251,148,68,.62); border-radius: 50%; animation: orbit 15s linear infinite; }
+    .stage-head { z-index: 2; position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .stage-name { margin-top: 3px; font-size: clamp(21px, 5.8vw, 29px); font-weight: 900; letter-spacing: -.065em; line-height: .95; }
+    .stage-number { padding: 7px 9px; color: var(--paper); background: var(--ink); border-radius: 9px; font-size: 10px; font-weight: 900; letter-spacing: .1em; white-space: nowrap; }
+    .city-button { width: min(236px, 69vw); height: min(236px, 69vw); margin: -2px auto 0; position: relative; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, rgba(255,255,255,.95) 0 33%, rgba(255,255,255,.38) 34% 55%, transparent 56%); transition: transform .16s var(--ease-out); }
+    .city-button::before { content: ""; width: 82%; height: 82%; position: absolute; border: 1px solid rgba(24,124,178,.38); border-radius: 50%; box-shadow: 0 0 0 13px rgba(255,255,255,.3), 0 0 0 15px rgba(24,124,178,.10); animation: breathe 3.4s ease-in-out infinite; }
+    .city-button::after { content: ""; position: absolute; width: 10px; height: 10px; top: 19%; right: 14%; border-radius: 50%; background: var(--yellow); box-shadow: -145px 48px 0 -2px rgba(55,169,107,.72), -80px 150px 0 -3px rgba(24,124,178,.6); }
+    .city-button:active, .city-button.clicked { transform: scale(.935) rotate(-.8deg); }
+    .city-button img { z-index: 1; position: relative; width: 84%; height: 84%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 17px 10px rgba(27,105,139,.25)); transition: transform .36s var(--ease-out), filter .36s var(--ease-out); }
+    .city-silhouette { z-index: 2; position: absolute; bottom: 13%; left: 50%; width: 57%; height: 11%; opacity: 0; pointer-events: none; transform: translateX(-50%); background: linear-gradient(90deg, transparent 0 5%, rgba(24,124,178,.55) 5% 15%, transparent 15% 20%, rgba(55,169,107,.48) 20% 31%, transparent 31% 37%, rgba(24,124,178,.6) 37% 49%, transparent 49% 56%, rgba(251,148,68,.54) 56% 69%, transparent 69% 76%, rgba(24,124,178,.55) 76% 92%, transparent 92%); clip-path: polygon(0 100%,0 68%,9% 68%,9% 36%,18% 36%,18% 64%,28% 64%,28% 0,39% 0,39% 48%,50% 48%,50% 25%,61% 25%,61% 68%,72% 68%,72% 13%,85% 13%,85% 55%,100% 55%,100% 100%); transition: opacity .36s, width .36s, height .36s; }
+    .city-button[data-stage="2"] .city-silhouette { height: 13%; opacity: .42; }
+    .city-button[data-stage="3"] .city-silhouette, .city-button[data-stage="4"] .city-silhouette { width: 65%; height: 19%; opacity: .58; }
+    .city-button[data-stage="5"] .city-silhouette, .city-button[data-stage="6"] .city-silhouette { width: 72%; height: 25%; opacity: .7; box-shadow: 0 -8px 0 -6px var(--orange); }
+    .city-button[data-stage="7"] .city-silhouette, .city-button[data-stage="8"] .city-silhouette { width: 77%; height: 31%; opacity: .8; filter: saturate(1.3); box-shadow: 0 -9px 0 -6px var(--yellow); }
+    .city-button[data-stage="9"] .city-silhouette, .city-button[data-stage="10"] .city-silhouette { width: 83%; height: 39%; opacity: .92; filter: saturate(1.4); box-shadow: 0 -11px 0 -5px var(--yellow), 0 -21px 0 -18px rgba(24,124,178,.25); }
+    .city-button[data-stage="4"] img, .city-button[data-stage="6"] img, .city-button[data-stage="8"] img { transform: scale(1.035); filter: saturate(1.08) drop-shadow(0 18px 11px rgba(27,105,139,.28)); }
+    .city-button[data-stage="9"] img, .city-button[data-stage="10"] img { transform: scale(1.075); filter: saturate(1.15) brightness(1.04) drop-shadow(0 19px 13px rgba(27,105,139,.3)); }
+    .tap-prompt { z-index: 3; position: absolute; bottom: 17px; left: 50%; display: flex; gap: 7px; align-items: center; color: var(--ink-soft); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; transform: translateX(-50%); }
+    .tap-prompt b { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px rgba(251,148,68,.2); }
+    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; } .particle { position: absolute; width: 8px; height: 8px; border-radius: 3px; animation: particle .66s ease-out forwards; }
+    .floating-value { z-index: 12; position: absolute; color: var(--blue); font-size: 19px; font-weight: 900; letter-spacing: -.05em; text-shadow: 0 2px 8px rgba(255,255,255,.95); pointer-events: none; animation: float-up .84s var(--ease-out) forwards; }
+    .floating-value.critical { color: #e3661f; font-size: 20px; }
+
+    .goal-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-top: 10px; padding: 11px 13px; border: 1px solid rgba(24,124,178,.18); border-radius: 16px; background: rgba(255,255,255,.62); }
+    .goal-label { color: var(--ink-soft); font-size: 9px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+    .goal-title { display: block; margin-top: 3px; font-size: 14px; font-weight: 900; letter-spacing: -.035em; }
+    .goal-desc { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 11px; line-height: 1.2; }
+    .goal-progress { min-width: 52px; color: var(--blue); font-size: 17px; font-weight: 900; text-align: right; letter-spacing: -.06em; }
+    .stage-track { display: flex; justify-content: space-between; gap: 3px; margin: 11px 5px 0; }
+    .stage-dot { width: 8px; height: 8px; flex: 1 1 auto; max-width: 22px; border-radius: 50%; background: #d3e5ec; transition: transform .2s, background .2s; }
+    .stage-dot.done { background: var(--green); }.stage-dot.current { background: var(--orange); transform: scale(1.45); box-shadow: 0 0 0 3px rgba(251,148,68,.18); }
+
+    .control-column { margin-top: 12px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 5px; border: 1px solid rgba(24,124,178,.14); border-radius: 17px; background: rgba(255,255,255,.44); }
+    .tab { min-height: 46px; padding: 8px; border: 1px solid transparent; border-radius: 12px; color: var(--ink-soft); background: transparent; cursor: pointer; font-size: 12px; font-weight: 900; transition: background .18s, color .18s, transform .18s; }
+    .tab.active { color: var(--paper); background: var(--ink); box-shadow: 0 7px 16px rgba(23,59,74,.18); }.tab:active { transform: scale(.97); }
+    .tutorial-card { display: none; align-items: center; gap: 10px; margin-top: 10px; padding: 11px 12px; border: 1px solid rgba(251,148,68,.4); border-radius: 16px; color: #865022; background: #fff8e8; font-size: 12px; line-height: 1.3; }
+    .tutorial-card.show { display: flex; }.tutorial-pulse { width: 13px; height: 13px; flex: 0 0 auto; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px rgba(251,148,68,.16); animation: breathe 1.8s ease-in-out infinite; }
+    .development { min-height: 280px; margin-top: 10px; }
+    .upgrade { width: 100%; min-height: 63px; display: grid; grid-template-columns: 43px minmax(0,1fr) auto; gap: 10px; align-items: center; position: relative; margin-bottom: 8px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 17px; color: var(--ink); background: var(--card); box-shadow: 0 7px 17px rgba(23,84,112,.07); cursor: pointer; text-align: left; transition: transform .16s var(--ease-out), border-color .16s, box-shadow .16s, background .16s; }
+    .upgrade:hover { border-color: var(--blue); transform: translateY(-1px); box-shadow: 0 10px 20px rgba(23,84,112,.12); }.upgrade:active { transform: scale(.985); }
+    .upgrade.locked { background: rgba(250,253,254,.7); }.upgrade.available { border-color: rgba(55,169,107,.7); background: linear-gradient(100deg, rgba(240,255,247,.95), var(--card)); box-shadow: 0 9px 22px rgba(55,169,107,.13); }.upgrade.available::after { content: "ДОСТУПНО"; position: absolute; top: -7px; right: 10px; padding: 3px 6px; border-radius: 7px; color: #fff; background: var(--green); font-size: 7px; font-weight: 900; letter-spacing: .08em; }.upgrade.maxed { opacity: .62; cursor: default; }.upgrade.shake { animation: shake .35s ease-in-out; }
+    .upgrade-code { width: 43px; height: 43px; display: grid; place-items: center; border: 1px solid rgba(24,124,178,.24); border-radius: 12px; color: var(--blue); background: #ebf9fe; font-size: 10px; font-weight: 900; letter-spacing: -.03em; }
+    .upgrade-main { min-width: 0; }.upgrade-name { display: block; font-size: 13px; font-weight: 900; line-height: 1.1; letter-spacing: -.025em; }.upgrade-desc { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 11px; line-height: 1.15; }.upgrade-level { display: block; margin-top: 5px; color: var(--green); font-size: 10px; font-weight: 800; }.upgrade-cost { min-width: 76px; color: var(--blue); font-size: 12px; font-weight: 900; line-height: 1.06; text-align: right; }.upgrade-cost small { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 9px; font-weight: 800; }.upgrade.locked .upgrade-cost { color: var(--ink-soft); }
+
+    .altitude-panel { min-height: 290px; display: grid; place-content: center; padding: 23px 18px; margin-top: 10px; border: 1px solid var(--line); border-radius: var(--radius); text-align: center; background: linear-gradient(145deg, #faffff, #e1f6fc); box-shadow: var(--shadow); }
+    .altitude-orbit { width: 70px; height: 70px; position: relative; margin: 0 auto 12px; border: 1px solid var(--blue); border-radius: 50%; }.altitude-orbit::before { content: ""; width: 21px; height: 21px; position: absolute; inset: 24px; border-radius: 50%; background: var(--orange); box-shadow: 24px -7px 0 -6px var(--green), -13px 29px 0 -6px var(--blue); }
+    .altitude-panel h2 { font-size: 25px; letter-spacing: -.065em; }.altitude-panel p { max-width: 360px; margin: 9px auto 13px; color: var(--ink-soft); font-size: 13px; line-height: 1.48; }.altitude-stats { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 9px 0 14px; }.altitude-stat { padding: 8px 9px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.72); font-size: 11px; }.altitude-stat strong { color: var(--blue); }.altitude-need { color: #a25f2e; font-size: 12px; font-weight: 900; }
+    .primary-btn { min-height: 49px; padding: 12px 16px; border: 1px solid var(--ink); border-radius: 14px; color: var(--paper); background: var(--ink); cursor: pointer; font-size: 12px; font-weight: 900; transition: transform .16s var(--ease-out), background .16s, color .16s; }.primary-btn:not(:disabled):hover { color: var(--ink); background: var(--yellow); }.primary-btn:active { transform: scale(.97); }.primary-btn:disabled { color: #78909a; border-color: #d3e1e5; background: #eaf1f3; cursor: default; }
+    .action-strip { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; margin-top: 10px; }.secondary-btn { min-height: 47px; padding: 9px; border: 1px solid var(--line); border-radius: 14px; color: var(--blue); background: rgba(255,255,255,.65); cursor: pointer; font-size: 11px; font-weight: 900; transition: transform .16s var(--ease-out), background .16s, border-color .16s; }.secondary-btn:hover { border-color: var(--blue); background: #fff; }.secondary-btn:active { transform: scale(.97); }
+
+    .modal { z-index: 70; display: none; position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px; background: rgba(17,55,70,.52); }.modal.show { display: flex; }.modal-content { width: min(100%, 380px); padding: 24px 21px; border-top: 7px solid var(--orange); border-radius: 0 0 20px 20px; background: var(--paper); box-shadow: 0 25px 70px rgba(13,45,58,.31); text-align: center; animation: modal-in .28s var(--ease-out); }.modal-symbol { width: 48px; height: 48px; position: relative; margin: 0 auto 11px; border-radius: 50%; background: var(--sky-2); }.modal-symbol::before { content: ""; width: 17px; height: 17px; position: absolute; inset: 15px; border-radius: 50%; background: var(--orange); box-shadow: 16px -4px 0 -6px var(--green); }.modal-content h2 { font-size: 25px; letter-spacing: -.065em; }.modal-content p { margin: 10px 0 18px; color: var(--ink-soft); font-size: 13px; line-height: 1.5; }.modal-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }.modal-btn { min-height: 44px; padding: 10px 14px; border: 1px solid var(--ink); border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: 900; }.modal-btn.primary { color: var(--paper); background: var(--ink); }.modal-btn.secondary { color: var(--ink); background: transparent; }
+
+    @keyframes breathe { 0%,100% { transform: scale(.96); opacity: .72; } 50% { transform: scale(1.04); opacity: 1; } } @keyframes orbit { to { transform: rotate(360deg); } } @keyframes float-up { from { opacity:1; transform:translateY(0) scale(1); } to { opacity:0; transform:translateY(-82px) scale(1.14); } } @keyframes particle { from { opacity:1; transform:translate(0,0) rotate(0deg) scale(1); } to { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(100deg) scale(0); } } @keyframes modal-in { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } } @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
+
+    @media (min-width: 780px), (orientation: landscape) and (max-height: 680px) {
+      .game-shell { padding-top: max(10px, env(safe-area-inset-top)); }
+      .game-layout { grid-template-columns: minmax(330px, .94fr) minmax(400px, 1.06fr); align-items: start; gap: 16px; }.city-column { position: sticky; top: 10px; }.control-column { max-height: calc(100dvh - 73px); display: flex; flex-direction: column; margin-top: 0; overflow: hidden; }.development { min-height: 0; flex: 1 1 auto; overflow-y: auto; padding: 2px 5px 4px 1px; scrollbar-color: var(--blue) transparent; }.altitude-panel { min-height: 0; flex: 1 1 auto; overflow-y: auto; }.action-strip { margin-bottom: 2px; }.stage-card { min-height: 320px; }.city-button { width: min(280px, 37vw); height: min(280px, 37vw); }.goal-card { margin-bottom: 0; }
     }
-    button { font: inherit; }
-    button:focus-visible, [role="button"]:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
-
-    .game-shell { width: min(100%, 560px); min-height: 100vh; margin: 0 auto; padding: 15px 14px 20px; position: relative; }
-    .game-shell::before, .game-shell::after { content: ""; position: fixed; pointer-events: none; border-radius: 50%; filter: blur(1px); z-index: -1; }
-    .game-shell::before { width: 270px; height: 270px; background: rgba(255, 212, 108, .27); top: -90px; right: -110px; }
-    .game-shell::after { width: 230px; height: 230px; background: rgba(62, 170, 114, .12); left: -110px; bottom: 20px; }
-
-    .topline { display: flex; justify-content: space-between; align-items: center; padding: 2px 3px 14px; }
-    .brand { display: flex; align-items: center; gap: 9px; }
-    .brand-mark { width: 30px; height: 30px; position: relative; display: grid; place-items: center; }
-    .brand-mark::before { content: ""; width: 24px; height: 10px; border: 2px solid var(--blue); border-radius: 50%; transform: rotate(-21deg); }
-    .brand-mark::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--orange); position: absolute; right: 1px; top: 2px; box-shadow: -15px 15px 0 #77c9ef; }
-    .brand-text { font-size: 15px; font-weight: 800; letter-spacing: -.04em; line-height: .95; text-transform: uppercase; }
-    .brand-text small { display: block; margin-top: 3px; font-size: 8px; letter-spacing: .13em; color: var(--muted); }
-    .city-badge { padding: 7px 9px; border: 1px solid var(--line); background: rgba(255,255,255,.58); font-size: 9px; font-weight: 700; letter-spacing: .06em; color: var(--blue-dark); text-transform: uppercase; }
-
-    .resource-card { display: flex; justify-content: space-between; align-items: flex-end; padding: 13px 15px 14px; border: 1px solid rgba(37, 140, 200, .19); background: var(--card); box-shadow: 0 7px 25px rgba(38, 125, 166, .09); }
-    .resource-label { font-size: 9px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-    .energy-value { margin-top: 3px; color: var(--blue-dark); font-size: clamp(27px, 8vw, 39px); line-height: 1; letter-spacing: -.07em; font-weight: 900; }
-    .energy-unit { font-size: 11px; font-weight: 700; letter-spacing: -.02em; }
-    .rate { text-align: right; padding-bottom: 3px; font-size: 10px; color: var(--muted); }
-    .rate strong { color: var(--green); font-size: 13px; }
-
-    .skyline-stage { min-height: 326px; margin: 11px 0 8px; padding: 18px 15px 16px; position: relative; overflow: hidden; background: linear-gradient(155deg, rgba(255,255,255,.87), rgba(213,240,250,.9)); border: 1px solid rgba(37, 140, 200, .2); box-shadow: var(--shadow); }
-    .skyline-stage::before { content: ""; position: absolute; top: 28px; left: -42px; width: 157px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.78); box-shadow: 292px 46px 0 2px rgba(255,255,255,.68), 184px 150px 0 10px rgba(255,255,255,.36); }
-    .skyline-stage::after { content: ""; position: absolute; width: 70px; height: 70px; top: 17px; right: 24px; border: 1px dashed rgba(255, 156, 69, .56); border-radius: 50%; }
-    .stage-header { position: relative; z-index: 2; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-    .stage-kicker { color: var(--blue-dark); font-size: 9px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
-    .stage-name { margin-top: 3px; font-size: 21px; line-height: 1; font-weight: 900; letter-spacing: -.055em; }
-    .stage-level { padding: 6px 8px; background: var(--ink); color: var(--paper); font-size: 9px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; }
-    .city-button { width: 220px; height: 220px; max-width: 76vw; max-height: 76vw; margin: 1px auto 0; border: 0; border-radius: 50%; position: relative; display: grid; place-items: center; cursor: pointer; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.99) 0 34%, rgba(255,255,255,.42) 35% 58%, transparent 59%); transition: transform .13s ease; }
-    .city-button:active, .city-button.clicked { transform: scale(.94); }
-    .city-button::before { content: ""; width: 182px; height: 182px; position: absolute; border: 1px solid rgba(37,140,200,.35); border-radius: 50%; box-shadow: 0 0 0 14px rgba(255,255,255,.3), 0 0 0 15px rgba(37,140,200,.12); animation: breathe 3.6s ease-in-out infinite; }
-    .city-button img { width: 180px; height: 180px; position: relative; z-index: 1; object-fit: contain; filter: drop-shadow(0 16px 10px rgba(26, 111, 150, .23)); pointer-events: none; transition: transform .32s ease, filter .32s ease; }
-    .city-button[data-stage="2"] img, .city-button[data-stage="4"] img, .city-button[data-stage="6"] img, .city-button[data-stage="8"] img { transform: scale(1.04); filter: saturate(1.08) drop-shadow(0 16px 10px rgba(26, 111, 150, .25)); }
-    .city-button[data-stage="9"] img { transform: scale(1.08); filter: saturate(1.14) brightness(1.04) drop-shadow(0 18px 12px rgba(26, 111, 150, .25)); }
-    .city-silhouette { position: absolute; z-index: 2; bottom: 28px; left: 50%; width: 124px; height: 13px; transform: translateX(-50%); opacity: 0; pointer-events: none; transition: height .32s ease, opacity .32s ease, width .32s ease; background: linear-gradient(90deg, transparent 0 6%, rgba(37,140,200,.38) 6% 14%, transparent 14% 18%, rgba(62,170,114,.42) 18% 29%, transparent 29% 36%, rgba(37,140,200,.42) 36% 48%, transparent 48% 55%, rgba(255,156,69,.38) 55% 68%, transparent 68% 75%, rgba(37,140,200,.42) 75% 91%, transparent 91%); clip-path: polygon(0 100%, 0 74%, 9% 74%, 9% 36%, 18% 36%, 18% 64%, 28% 64%, 28% 0, 39% 0, 39% 48%, 50% 48%, 50% 25%, 61% 25%, 61% 68%, 72% 68%, 72% 13%, 85% 13%, 85% 55%, 100% 55%, 100% 100%); }
-    .city-button[data-stage="2"] .city-silhouette { opacity: .42; height: 17px; }
-    .city-button[data-stage="3"] .city-silhouette, .city-button[data-stage="4"] .city-silhouette { opacity: .56; width: 142px; height: 25px; }
-    .city-button[data-stage="5"] .city-silhouette, .city-button[data-stage="6"] .city-silhouette { opacity: .68; width: 156px; height: 33px; box-shadow: 0 -8px 0 -6px var(--orange); }
-    .city-button[data-stage="7"] .city-silhouette, .city-button[data-stage="8"] .city-silhouette { opacity: .76; width: 165px; height: 39px; filter: saturate(1.3); box-shadow: 0 -9px 0 -6px var(--yellow); }
-    .city-button[data-stage="9"] .city-silhouette, .city-button[data-stage="10"] .city-silhouette { opacity: .9; width: 178px; height: 49px; filter: saturate(1.4); box-shadow: 0 -11px 0 -5px var(--yellow), 0 -20px 0 -18px rgba(37,140,200,.23); }
-    .tap-hint { position: absolute; z-index: 3; bottom: 5px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; font-size: 9px; color: var(--muted); letter-spacing: .05em; white-space: nowrap; text-transform: uppercase; }
-    .tap-hint i { width: 8px; height: 8px; background: var(--orange); border-radius: 50%; display: inline-block; box-shadow: 0 0 0 4px rgba(255,156,69,.18); }
-
-    .progress-wrap { position: relative; z-index: 2; margin: 0 auto; width: min(100%, 345px); }
-    .progress-label { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-    .progress-label strong { color: var(--ink); }
-    .progress-track { height: 10px; overflow: hidden; border-radius: 30px; background: rgba(23,52,66,.11); }
-    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), #79c8eb 55%, var(--yellow)); border-radius: inherit; transition: width .32s ease; }
-
-    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 9px; }
-    .tab { padding: 12px 8px; border: 1px solid var(--line); background: rgba(255,255,255,.42); color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 800; text-align: center; transition: all .18s ease; }
-    .tab.active { color: var(--paper); background: var(--blue-dark); border-color: var(--blue-dark); box-shadow: 0 7px 16px rgba(23,107,154,.18); }
-    .development { min-height: 270px; }
-    .upgrade { position: relative; display: grid; grid-template-columns: 39px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px; margin-bottom: 8px; border: 1px solid var(--line); background: var(--card); box-shadow: 0 6px 18px rgba(23,84,112,.07); cursor: pointer; transition: transform .14s ease, border-color .14s ease, background .14s ease; }
-    .upgrade:hover { transform: translateY(-2px); border-color: var(--blue); }
-    .upgrade:active { transform: scale(.98); }
-    .upgrade.disabled { opacity: .5; cursor: default; }
-    .upgrade.disabled:hover { transform: none; border-color: var(--line); }
-    .upgrade-code { width: 39px; height: 39px; display: grid; place-items: center; border: 1px solid rgba(37,140,200,.27); color: var(--blue-dark); background: #eef9fd; font-size: 10px; font-weight: 900; letter-spacing: -.04em; }
-    .upgrade-name { font-size: 12px; line-height: 1.15; font-weight: 900; }
-    .upgrade-desc { margin-top: 2px; font-size: 9px; color: var(--muted); }
-    .upgrade-level { margin-top: 4px; color: var(--green); font-size: 9px; font-weight: 800; }
-    .upgrade-cost { min-width: 68px; color: var(--blue-dark); font-size: 11px; font-weight: 900; text-align: right; }
-
-    .altitude-panel { min-height: 280px; padding: 26px 18px; text-align: center; border: 1px solid var(--line); background: linear-gradient(145deg, #f9feff, #e4f6fb); box-shadow: var(--shadow); }
-    .altitude-orbit { width: 72px; height: 72px; margin: 0 auto 12px; position: relative; border: 1px solid var(--blue); border-radius: 50%; }
-    .altitude-orbit::before { content: ""; width: 22px; height: 22px; position: absolute; inset: 24px; border-radius: 50%; background: var(--orange); box-shadow: 24px -6px 0 -6px var(--green), -13px 29px 0 -6px var(--blue); }
-    .altitude-panel h3 { font-size: 22px; letter-spacing: -.055em; }
-    .altitude-panel > p { max-width: 330px; margin: 9px auto 15px; color: var(--muted); font-size: 12px; line-height: 1.55; }
-    .altitude-stats { margin: 14px auto; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
-    .altitude-stat { padding: 8px 9px; background: rgba(255,255,255,.69); border: 1px solid var(--line); font-size: 10px; }
-    .altitude-stat strong { color: var(--blue-dark); }
-    .altitude-btn { padding: 13px 18px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; font-size: 12px; font-weight: 900; transition: all .18s ease; }
-    .altitude-btn:not(:disabled):hover { color: var(--ink); background: var(--yellow); }
-    .altitude-btn:disabled { opacity: .4; cursor: not-allowed; }
-
-    .footer-controls { display: flex; justify-content: space-between; gap: 7px; padding: 10px 2px 0; }
-    .footer-controls button { padding: 8px 4px; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; font-weight: 700; }
-    .footer-controls button:hover { color: var(--blue-dark); border-bottom-color: var(--blue-dark); }
-
-    .floating-value { position: absolute; z-index: 10; pointer-events: none; color: var(--blue-dark); font-size: 17px; font-weight: 900; letter-spacing: -.04em; text-shadow: 0 2px 8px rgba(255,255,255,.95); animation: floatUp .9s cubic-bezier(.23,1,.32,1) forwards; }
-    .floating-value.critical { color: #e86c21; font-size: 19px; }
-    .particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-    .particle { width: 7px; height: 7px; position: absolute; border-radius: 2px; background: var(--yellow); animation: particle .7s ease-out forwards; }
-    .toast { width: max-content; max-width: calc(100vw - 30px); position: fixed; z-index: 100; left: 50%; bottom: 26px; padding: 11px 16px; color: var(--paper); background: var(--ink); box-shadow: 0 12px 30px rgba(23,52,66,.24); font-size: 12px; font-weight: 800; transform: translateX(-50%) translateY(90px); transition: transform .28s cubic-bezier(.23,1,.32,1); pointer-events: none; text-align: center; }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .modal { display: none; position: fixed; z-index: 90; inset: 0; padding: 20px; background: rgba(23,52,66,.48); align-items: center; justify-content: center; }
-    .modal.show { display: flex; }
-    .modal-content { width: min(100%, 355px); padding: 25px 21px; background: var(--paper); box-shadow: 0 20px 60px rgba(12,48,62,.28); border-top: 7px solid var(--orange); text-align: center; }
-    .modal-symbol { width: 46px; height: 46px; margin: 0 auto 12px; position: relative; border-radius: 50%; background: var(--sky-deep); }
-    .modal-symbol::before { content: ""; width: 16px; height: 16px; position: absolute; inset: 15px; border-radius: 50%; background: var(--orange); box-shadow: 15px -4px 0 -5px var(--green); }
-    .modal-content h2 { font-size: 24px; letter-spacing: -.06em; }
-    .modal-content p { margin: 10px 0 18px; font-size: 13px; color: var(--muted); line-height: 1.55; }
-    .modal-actions { display: flex; justify-content: center; gap: 8px; }
-    .modal-btn { padding: 11px 14px; border: 1px solid var(--ink); cursor: pointer; font-size: 11px; font-weight: 900; }
-    .modal-btn.primary { background: var(--ink); color: var(--paper); }
-    .modal-btn.primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); }
-    .modal-btn.secondary { color: var(--ink); background: transparent; }
-
-    @keyframes breathe { 0%, 100% { transform: scale(.97); opacity: .72; } 50% { transform: scale(1.04); opacity: 1; } }
-    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-84px) scale(1.16); } }
-    @keyframes particle { 0% { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) rotate(95deg) scale(0); } }
-    @media (min-width: 620px) { .game-shell { padding-top: 24px; } .skyline-stage { min-height: 355px; } .city-button { width: 238px; height: 238px; } .city-button img { width: 195px; height: 195px; } }
-    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+    @media (orientation: landscape) and (max-height: 560px) { .brand-tag { display: none; }.topbar { min-height: 38px; padding-bottom: 7px; }.resource-card { min-height: 67px; padding: 10px 14px; }.stage-card { min-height: 230px; padding: 10px 12px; }.stage-name { font-size: 20px; }.city-button { width: min(154px, 24vw); height: min(154px, 24vw); margin: -7px auto 0; }.tap-prompt { bottom: 8px; font-size: 8px; }.goal-card,.stage-track { display: none; }.tab { min-height: 41px; }.upgrade { min-height: 57px; margin-bottom: 6px; }.action-strip { margin-top: 6px; } }
+    @media (max-width: 390px) { .platform-note { display: none; }.stage-card { min-height: 315px; }.upgrade { grid-template-columns: 39px minmax(0,1fr) 65px; gap: 7px; padding: 9px; }.upgrade-code { width: 39px; height: 39px; }.upgrade-name { font-size: 12px; }.upgrade-desc { font-size: 10px; }.upgrade-cost { min-width: 65px; font-size: 11px; }.city-button { width: min(218px, 71vw); height: min(218px, 71vw); } }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
   </style>
 </head>
 <body>
   <main class="game-shell">
-    <header class="topline">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <div class="brand-text">Город<br>в облаках<small>развивайте свою высоту</small></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><div class="brand-name">Город<br>в облаках<span class="brand-tag">постройте свою высоту</span></div></div>
+      <span class="platform-note">небесный проект</span>
+      <div class="quick-controls" aria-label="Настройки звука">
+        <button class="icon-button" id="musicBtn" aria-label="Выключить музыку" title="Музыка">♫</button>
+        <button class="icon-button" id="soundBtn" aria-label="Выключить звуковые эффекты" title="Эффекты">◌</button>
       </div>
-      <span class="city-badge">Городской проект</span>
     </header>
 
-    <section class="resource-card" aria-label="Ресурсы города">
-      <div>
-        <p class="resource-label">Энергия города</p>
-        <div class="energy-value" id="energyDisplay">0 <span class="energy-unit">энергии</span></div>
-      </div>
-      <p class="rate"><strong id="perSecDisplay">0</strong><br>энергии в секунду</p>
-    </section>
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
 
-    <section class="skyline-stage" aria-label="Текущая стадия развития города">
-      <div class="stage-header">
-        <div>
-          <p class="stage-kicker">Текущая высота</p>
-          <h1 class="stage-name" id="stageName">Небесная платформа</h1>
-        </div>
-        <span class="stage-level" id="stageLevel">ЭТАП 01</span>
-      </div>
-      <button class="city-button" id="cityButton" data-stage="1" aria-label="Зарядить городское ядро">
-        <img id="cityImage" src="assets/skyline-stage-01.png" alt="Небесная платформа">
-        <span class="city-silhouette" aria-hidden="true"></span>
-        <span class="particles" id="particles"></span>
-      </button>
-      <p class="tap-hint"><i></i> Зарядите городское ядро</p>
-      <div class="progress-wrap">
-        <div class="progress-label"><span>Развитие города</span><strong id="evoPercent">0%</strong></div>
-        <div class="progress-track"><div class="progress-fill" id="evoFill"></div></div>
-      </div>
-    </section>
+    <div class="game-layout">
+      <section class="city-column" aria-label="Сцена развития города">
+        <section class="resource-card" aria-label="Ресурсы города">
+          <div><p class="eyebrow">Энергия города</p><div class="energy-value" id="energyDisplay">0 <span class="energy-unit">энергии</span></div></div>
+          <p class="rate"><strong id="perSecDisplay">0</strong>энергии в секунду</p>
+        </section>
 
-    <div class="tabs" role="tablist" aria-label="Разделы игры">
-      <button class="tab active" id="developmentTab" data-tab="development" role="tab" aria-selected="true">Развитие города</button>
-      <button class="tab" id="altitudeTab" data-tab="altitude" role="tab" aria-selected="false">Новая высота</button>
+        <section class="stage-card" aria-label="Текущая стадия развития города">
+          <div class="stage-head"><div><p class="eyebrow">Текущая высота</p><h1 class="stage-name" id="stageName">Небесная платформа</h1></div><span class="stage-number" id="stageLevel">ЭТАП 01</span></div>
+          <button class="city-button" id="cityButton" data-stage="1" aria-label="Зарядить городское ядро"><img id="cityImage" src="assets/skyline-stage-01.png" alt="Небесная платформа"><span class="city-silhouette" aria-hidden="true"></span><span class="particles" id="particles"></span></button>
+          <p class="tap-prompt"><b></b>Зарядите городское ядро</p>
+        </section>
+
+        <section class="goal-card" aria-label="Следующая цель"><div><span class="goal-label">Следующий район</span><strong class="goal-title" id="goalTitle">Первые огни</strong><span class="goal-desc" id="goalDescription">Накопите энергию для первого квартала</span></div><strong class="goal-progress" id="evoPercent">0%</strong></section>
+        <div class="stage-track" id="stageTrack" aria-label="Прогресс десяти районов города"></div>
+      </section>
+
+      <section class="control-column" aria-label="Управление развитием">
+        <div class="tabs" role="tablist" aria-label="Разделы игры"><button class="tab active" id="developmentTab" data-tab="development" role="tab" aria-selected="true">Развитие</button><button class="tab" id="altitudeTab" data-tab="altitude" role="tab" aria-selected="false">Новая высота</button></div>
+        <aside class="tutorial-card" id="tutorialCard"><span class="tutorial-pulse" aria-hidden="true"></span><span id="tutorialText">Зарядите ядро — энергия позволит открыть первую постройку.</span></aside>
+        <section class="development" id="developmentPanel" role="tabpanel" aria-labelledby="developmentTab"></section>
+        <section class="altitude-panel" id="altitudePanel" role="tabpanel" aria-labelledby="altitudeTab" hidden>
+          <div><div class="altitude-orbit" aria-hidden="true"></div><h2>Новая высота</h2><p>Начните развитие заново, но сохраните постоянный коэффициент для следующих небесных городов.</p><div class="altitude-stats"><span class="altitude-stat">Коэффициент: <strong id="prestigeMult">×1,00</strong></span><span class="altitude-stat">Порог: <strong>1 млн</strong></span></div><p class="altitude-need" id="altitudeNeed">Нужно ещё 1,00 млн энергии</p><button class="primary-btn" id="prestigeBtn" disabled>Открыть новую высоту</button></div>
+        </section>
+        <div class="action-strip"><button class="secondary-btn" id="grantBtn">Получить городской грант</button><button class="secondary-btn" id="resetBtn">Сбросить город</button></div>
+      </section>
     </div>
-
-    <section class="development" id="developmentPanel" role="tabpanel" aria-labelledby="developmentTab"></section>
-
-    <section class="altitude-panel" id="altitudePanel" role="tabpanel" aria-labelledby="altitudeTab" style="display:none">
-      <div class="altitude-orbit" aria-hidden="true"></div>
-      <h3>Новая высота</h3>
-      <p>Начните развитие города заново и сохраните постоянный коэффициент развития для будущих высот.</p>
-      <div class="altitude-stats">
-        <span class="altitude-stat">Коэффициент: <strong id="prestigeMult">×1,00</strong></span>
-        <span class="altitude-stat">Порог: <strong>1 000 000 энергии</strong></span>
-      </div>
-      <button class="altitude-btn" id="prestigeBtn" disabled>Открыть новую высоту</button>
-    </section>
-
-    <footer class="footer-controls">
-      <button id="adBtn">Получить городской грант</button>
-      <button id="soundBtn">Звук: вкл.</button>
-      <button id="resetBtn">Сбросить город</button>
-    </footer>
   </main>
 
-  <div class="modal" id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle">
-    <div class="modal-content">
-      <div class="modal-symbol" aria-hidden="true"></div>
-      <h2 id="offlineTitle">Пока вас не было…</h2>
-      <p id="offlineText">Город накопил энергию.</p>
-      <div class="modal-actions"><button class="modal-btn primary" id="offlineOk">Забрать энергию</button></div>
-    </div>
-  </div>
-  <div class="modal" id="prestigeModal" role="dialog" aria-modal="true" aria-labelledby="prestigeTitle">
-    <div class="modal-content">
-      <div class="modal-symbol" aria-hidden="true"></div>
-      <h2 id="prestigeTitle">Открыть новую высоту?</h2>
-      <p>Развитие текущего города сбросится, но коэффициент развития вырастет до <strong id="newPrestigeMult">×1,50</strong>.</p>
-      <div class="modal-actions"><button class="modal-btn secondary" id="prestigeCancel">Отмена</button><button class="modal-btn primary" id="prestigeConfirm">Открыть высоту</button></div>
-    </div>
-  </div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal" id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle"><div class="modal-content"><div class="modal-symbol" aria-hidden="true"></div><h2 id="offlineTitle">Пока вас не было…</h2><p id="offlineText">Город накопил энергию.</p><div class="modal-actions"><button class="modal-btn primary" id="offlineOk">Забрать энергию</button></div></div></div>
+  <div class="modal" id="prestigeModal" role="dialog" aria-modal="true" aria-labelledby="prestigeTitle"><div class="modal-content"><div class="modal-symbol" aria-hidden="true"></div><h2 id="prestigeTitle">Открыть новую высоту?</h2><p>Текущий город начнёт развитие заново, а постоянный коэффициент вырастет до <strong id="newPrestigeMult">×1,50</strong>.</p><div class="modal-actions"><button class="modal-btn secondary" id="prestigeCancel">Отмена</button><button class="modal-btn primary" id="prestigeConfirm">Открыть высоту</button></div></div></div>
+  <div class="modal" id="stageModal" role="dialog" aria-modal="true" aria-labelledby="stageModalTitle"><div class="modal-content"><div class="modal-symbol" aria-hidden="true"></div><h2 id="stageModalTitle">Новый район открыт</h2><p id="stageModalText">Ваш город вырос.</p><div class="modal-actions"><button class="modal-btn primary" id="stageModalOk">Продолжить</button></div></div></div>
 
   <script>
-    // TINY SKYLINE — локализованный кликер. Экономика, автосохранение и Yandex Games SDK сохраняют исходную логику.
-    const ASSETS = {
-      stage1: 'assets/skyline-stage-01.png',
-      stage3: 'assets/skyline-stage-01.png',
-      stage5: 'assets/skyline-stage-01.png',
-      stage7: 'assets/skyline-stage-01.png',
-      stage10: 'assets/skyline-stage-01.png'
-    };
-
+    // TINY SKYLINE SHOWCASE — лёгкая HTML5-сборка с локальным fallback, управляемым аудио и безопасной интеграцией VK Bridge.
+    const ASSETS = { city: 'assets/skyline-stage-01.png', music: 'assets/tiny-skyline-ambient-loop.mp3' };
     const STAGES = [
-      { name: 'Небесная платформа', img: ASSETS.stage1, req: 0, stage: 1 },
-      { name: 'Первые огни', img: ASSETS.stage1, req: 500, stage: 2 },
-      { name: 'Уютный квартал', img: ASSETS.stage3, req: 5000, stage: 3 },
-      { name: 'Сад на крыше', img: ASSETS.stage3, req: 25000, stage: 4 },
-      { name: 'Лёгкий мост', img: ASSETS.stage5, req: 100000, stage: 5 },
-      { name: 'Воздушная станция', img: ASSETS.stage5, req: 500000, stage: 6 },
-      { name: 'Солнечный район', img: ASSETS.stage7, req: 2000000, stage: 7 },
-      { name: 'Умный город', img: ASSETS.stage7, req: 10000000, stage: 8 },
-      { name: 'Небесная столица', img: ASSETS.stage10, req: 50000000, stage: 9 },
-      { name: 'Город мечты', img: ASSETS.stage10, req: 250000000, stage: 10 }
+      { name: 'Небесная платформа', req: 0, desc: 'Зарядите ядро для первых огней' }, { name: 'Первые огни', req: 500, desc: 'Соберите энергию для уютного квартала' },
+      { name: 'Уютный квартал', req: 5000, desc: 'Откройте сады на крыше' }, { name: 'Сад на крыше', req: 25000, desc: 'Постройте лёгкий мост между островами' },
+      { name: 'Лёгкий мост', req: 100000, desc: 'Запустите воздушную станцию' }, { name: 'Воздушная станция', req: 500000, desc: 'Запитайте солнечный район' },
+      { name: 'Солнечный район', req: 2000000, desc: 'Соедините районы в умный город' }, { name: 'Умный город', req: 10000000, desc: 'Поднимите небесную столицу' },
+      { name: 'Небесная столица', req: 50000000, desc: 'Завершите город мечты' }, { name: 'Город мечты', req: 250000000, desc: 'Вы создали город мечты' }
     ];
-
     const UPGRADES = [
-      { id: 'generator', code: '01', name: 'Ручной генератор', desc: '+1 к силе заряда', baseCost: 15, costMult: 1.15, effect: lvl => ({ clickPower: lvl }), maxLevel: 100 },
-      { id: 'solar', code: '02', name: 'Солнечная панель', desc: '+0,5 энергии в секунду', baseCost: 50, costMult: 1.18, effect: lvl => ({ perSec: lvl * .5 }), maxLevel: 100 },
-      { id: 'quarter', code: '03', name: 'Квартал мастеров', desc: '+3 энергии в секунду', baseCost: 300, costMult: 1.22, effect: lvl => ({ perSec: lvl * 3 }), maxLevel: 50 },
-      { id: 'farm', code: '04', name: 'Воздушная ферма', desc: '+15 энергии в секунду', baseCost: 2000, costMult: 1.25, effect: lvl => ({ perSec: lvl * 15 }), maxLevel: 40 },
-      { id: 'station', code: '05', name: 'Энергостанция', desc: '+80 энергии в секунду', baseCost: 15000, costMult: 1.28, effect: lvl => ({ perSec: lvl * 80 }), maxLevel: 30 },
-      { id: 'resonator', code: '06', name: 'Городской резонатор', desc: '×1,5 ко всем доходам', baseCost: 50000, costMult: 2.5, effect: lvl => ({ mult: Math.pow(1.5, lvl) }), maxLevel: 10 },
-      { id: 'node', code: '07', name: 'Импульсный узел', desc: '+25 к силе заряда', baseCost: 100000, costMult: 1.35, effect: lvl => ({ clickPower: lvl * 25 }), maxLevel: 50 },
-      { id: 'network', code: '08', name: 'Облачная мегасеть', desc: '+500 энергии в секунду', baseCost: 500000, costMult: 1.4, effect: lvl => ({ perSec: lvl * 500 }), maxLevel: 20 }
+      { id:'generator', code:'ЯД', name:'Ручной генератор', desc:'+1 к силе заряда', baseCost:15, costMult:1.15, effect:lvl=>({clickPower:lvl}), maxLevel:100 },
+      { id:'solar', code:'СЛ', name:'Солнечная панель', desc:'+0,5 энергии в секунду', baseCost:50, costMult:1.18, effect:lvl=>({perSec:lvl*.5}), maxLevel:100 },
+      { id:'quarter', code:'КВ', name:'Квартал мастеров', desc:'+3 энергии в секунду', baseCost:300, costMult:1.22, effect:lvl=>({perSec:lvl*3}), maxLevel:50 },
+      { id:'farm', code:'ФР', name:'Воздушная ферма', desc:'+15 энергии в секунду', baseCost:2000, costMult:1.25, effect:lvl=>({perSec:lvl*15}), maxLevel:40 },
+      { id:'station', code:'ЭС', name:'Энергостанция', desc:'+80 энергии в секунду', baseCost:15000, costMult:1.28, effect:lvl=>({perSec:lvl*80}), maxLevel:30 },
+      { id:'resonator', code:'РЗ', name:'Городской резонатор', desc:'×1,5 ко всем доходам', baseCost:50000, costMult:2.5, effect:lvl=>({mult:Math.pow(1.5,lvl)}), maxLevel:10 },
+      { id:'node', code:'ИУ', name:'Импульсный узел', desc:'+25 к силе заряда', baseCost:100000, costMult:1.35, effect:lvl=>({clickPower:lvl*25}), maxLevel:50 },
+      { id:'network', code:'МС', name:'Облачная мегасеть', desc:'+500 энергии в секунду', baseCost:500000, costMult:1.4, effect:lvl=>({perSec:lvl*500}), maxLevel:20 }
     ];
+    const STORAGE_KEY = 'tinySkylineShowcaseSave';
+    const PRESTIGE_COST = 1000000;
+    const defaultState = () => ({ energy:0, totalEnergy:0, clickPower:1, perSec:0, mult:1, prestigeMult:1, upgrades:Object.fromEntries(UPGRADES.map(u=>[u.id,0])), lastSave:Date.now(), sound:true, music:true, tutorialSeen:false, grantReadyAt:0 });
+    let state = defaultState(), lastTick = Date.now(), lastUiRefresh = 0, visible = true, audioContext = null, musicAudio = null, bridgeReady = false, stageAtLastUpdate = 1;
+    const activeVoices = new Set(), lastSoundAt = { charge:0 };
 
-    const STORAGE_KEY = 'tinySkylineSave';
-    let state = { energy: 0, totalEnergy: 0, clickPower: 1, perSec: 0, mult: 1, prestigeMult: 1, upgrades: {}, lastSave: Date.now(), sound: true };
-    UPGRADES.forEach(upgrade => state.upgrades[upgrade.id] = 0);
+    const $ = id => document.getElementById(id);
+    function formatNumber(value) { const n=Math.max(0,Number(value)||0), compact=(d,s,p)=>`${(n/d).toFixed(p).replace('.',',')} ${s}`; if(n<1000)return (Number.isInteger(n)?n.toLocaleString('ru-RU'):n.toFixed(n<10?1:0).replace('.',',')).replace(/,0$/,''); if(n<1e6)return compact(1e3,'тыс.',1); if(n<1e9)return compact(1e6,'млн',2); if(n<1e12)return compact(1e9,'млрд',2); return compact(1e12,'трлн',2); }
+    function showNotice(message, tone='') { const el=$('notice'); el.textContent=message; el.className=`notice show ${tone}`; clearTimeout(showNotice.timer); showNotice.timer=setTimeout(()=>el.className='notice',2400); }
+    function currentStage() { return [...STAGES].reverse().find(stage=>state.totalEnergy>=stage.req)||STAGES[0]; }
+    function nextStage() { const current=currentStage(); return STAGES[STAGES.indexOf(current)+1]||null; }
+    function stageIndex() { return STAGES.indexOf(currentStage())+1; }
+    function upgradeCost(upgrade) { return Math.floor(upgrade.baseCost*Math.pow(upgrade.costMult,state.upgrades[upgrade.id]||0)); }
+    function isMaxed(upgrade) { return (state.upgrades[upgrade.id]||0)>=upgrade.maxLevel; }
+    function canBuy(upgrade) { return !isMaxed(upgrade)&&state.energy>=upgradeCost(upgrade); }
 
-    let audioCtx = null;
-    let ysdk = null;
-    let player = null;
-    let lastInterstitial = 0;
-    let lastTick = Date.now();
-    let isVisible = true;
-    const INTERSTITIAL_COOLDOWN = 90000;
+    function safeBridge(method, params={}) { try { if(window.vkBridge?.send) return window.vkBridge.send(method,params).catch(()=>null); } catch(error) {} return Promise.resolve(null); }
+    function initBridge() { safeBridge('VKWebAppInit').then(result=>{ bridgeReady=Boolean(result?.result); }); }
+    function haptic(style='light') { if(bridgeReady) safeBridge('VKWebAppTapticImpactOccurred',{style}); }
 
-    function formatNumber(value) {
-      const n = Math.max(0, Number(value) || 0);
-      const compact = (divisor, suffix, digits) => `${(n / divisor).toFixed(digits).replace('.', ',')} ${suffix}`;
-      if (n < 1000) return Math.floor(n).toLocaleString('ru-RU');
-      if (n < 1e6) return compact(1e3, 'тыс.', 1);
-      if (n < 1e9) return compact(1e6, 'млн', 2);
-      if (n < 1e12) return compact(1e9, 'млрд', 2);
-      return compact(1e12, 'трлн', 2);
-    }
+    function unlockAudio() { if(!audioContext) audioContext=new (window.AudioContext||window.webkitAudioContext)(); if(audioContext.state==='suspended') audioContext.resume(); if(!musicAudio){ musicAudio=new Audio(ASSETS.music); musicAudio.loop=true; musicAudio.preload='auto'; musicAudio.volume=.24; } if(state.music) startMusic(); }
+    function startMusic() { if(!musicAudio||!state.music) return; musicAudio.play().catch(()=>{}); }
+    function toggleMusic() { state.music=!state.music; if(!state.music&&musicAudio)musicAudio.pause(); if(state.music){ unlockAudio(); startMusic(); } $('musicBtn').classList.toggle('off',!state.music); $('musicBtn').setAttribute('aria-label',state.music?'Выключить музыку':'Включить музыку'); showNotice(state.music?'Музыка включена':'Музыка выключена'); save(); }
+    function toggleSound() { state.sound=!state.sound; $('soundBtn').classList.toggle('off',!state.sound); $('soundBtn').setAttribute('aria-label',state.sound?'Выключить эффекты':'Включить эффекты'); showNotice(state.sound?'Эффекты включены':'Эффекты выключены'); save(); }
+    function playSound(type) { if(!state.sound||!audioContext) return; const now=performance.now(); if(type==='charge'&&now-lastSoundAt.charge<58)return; lastSoundAt[type]=now; if(activeVoices.size>=5)return; const profile={charge:[560,780,.045,.09,'sine'], build:[390,740,.07,.17,'triangle'], unavailable:[180,132,.045,.13,'sine'], evolve:[360,1080,.085,.48,'triangle'], altitude:[190,1160,.09,.66,'sine'], grant:[440,900,.065,.34,'triangle']}[type]||[520,720,.05,.12,'sine']; const [from,to,volume,duration,wave]=profile, oscillator=audioContext.createOscillator(), gain=audioContext.createGain(); activeVoices.add(oscillator); oscillator.type=wave; oscillator.frequency.setValueAtTime(from,audioContext.currentTime); oscillator.frequency.exponentialRampToValueAtTime(to,audioContext.currentTime+duration); gain.gain.setValueAtTime(volume,audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration); oscillator.connect(gain); gain.connect(audioContext.destination); oscillator.onended=()=>activeVoices.delete(oscillator); oscillator.start(); oscillator.stop(audioContext.currentTime+duration); }
 
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.classList.add('show');
-      clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2300);
-    }
+    function recalculate() { let click=1, passive=0, mult=1; UPGRADES.forEach(upgrade=>{ const level=state.upgrades[upgrade.id]||0; if(!level)return; const effect=upgrade.effect(level); if(effect.clickPower)click+=effect.clickPower; if(effect.perSec)passive+=effect.perSec; if(effect.mult)mult*=effect.mult; }); state.clickPower=click*state.prestigeMult*mult; state.perSec=passive*state.prestigeMult*mult; state.mult=mult; }
+    function createParticles() { const container=$('particles'); for(let i=0;i<8;i++){ const part=document.createElement('i'),angle=Math.random()*Math.PI*2,distance=45+Math.random()*65; part.className='particle'; part.style.left='50%';part.style.top='50%';part.style.setProperty('--tx',`${Math.cos(angle)*distance}px`);part.style.setProperty('--ty',`${Math.sin(angle)*distance}px`);part.style.background=["#ffd36a","#37a96b","#36b4e5","#fb9444"][i%4];container.appendChild(part);setTimeout(()=>part.remove(),700); } }
+    function spawnValue(event, amount, critical) { const button=$('cityButton'),rect=button.getBoundingClientRect(),touch=event.touches?.[0],x=(event.clientX||touch?.clientX||rect.left+rect.width/2)-rect.left,y=(event.clientY||touch?.clientY||rect.top+rect.height/2)-rect.top,value=document.createElement('span'); value.className=`floating-value${critical?' critical':''}`;value.textContent=`${critical?'ЭНЕРГОВСПЛЕСК ':'+'}${formatNumber(amount)}`;value.style.left=`${x}px`;value.style.top=`${y}px`;button.appendChild(value);setTimeout(()=>value.remove(),900); }
+    function chargeCity(event) { unlockAudio(); const before=currentStage().name, critical=Math.random()<.08, amount=state.clickPower*(critical?5:1); state.energy+=amount;state.totalEnergy+=amount; const city=$('cityButton');city.classList.add('clicked');setTimeout(()=>city.classList.remove('clicked'),130);spawnValue(event,amount,critical);createParticles();playSound('charge');haptic(critical?'medium':'light');updateUI();renderDevelopment();checkStageChange(before);save(false); }
+    function checkStageChange(previousName) { const stage=currentStage(); if(stage.name!==previousName){ playSound('evolve');haptic('medium');$('stageModalTitle').textContent=`Открыт район «${stage.name}»`; $('stageModalText').textContent='Город стал выше. Новые постройки помогут ускорить следующий рост.'; $('stageModal').classList.add('show'); } }
 
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    function updateStageTrack() { const active=stageIndex(); $('stageTrack').innerHTML=STAGES.map((_,index)=>`<i class="stage-dot ${index+1<active?'done':''} ${index+1===active?'current':''}" aria-hidden="true"></i>`).join(''); }
+    function updateGuide() { const first=UPGRADES[0], firstAffordable=canBuy(first)&&!state.tutorialSeen; const card=$('tutorialCard'); if(!state.tutorialSeen&&state.totalEnergy<first.baseCost){ $('tutorialText').textContent='Зарядите ядро — энергия позволит открыть первую постройку.'; card.classList.add('show'); } else if(firstAffordable){ $('tutorialText').textContent='Первый генератор доступен. Он усилит каждый заряд ядра.';card.classList.add('show'); } else card.classList.remove('show'); }
+    function updateUI() { const stage=currentStage(), next=nextStage(), index=stageIndex(), progress=next?Math.max(0,Math.min(100,Math.floor((state.totalEnergy-stage.req)/(next.req-stage.req)*100))):100; $('energyDisplay').innerHTML=`${formatNumber(state.energy)} <span class="energy-unit">энергии</span>`;$('perSecDisplay').textContent=formatNumber(state.perSec);$('stageName').textContent=stage.name;$('stageLevel').textContent=`ЭТАП ${String(index).padStart(2,'0')}`;$('cityImage').alt=stage.name;$('cityButton').dataset.stage=index;$('evoPercent').textContent=next?`${progress}%`:'ГОТОВО'; $('goalTitle').textContent=next?next.name:'Город мечты';$('goalDescription').textContent=next?`${next.desc} · осталось ${formatNumber(Math.max(0,next.req-state.totalEnergy))} энергии`:'Вы достигли высшей стадии небесного города.';$('prestigeMult').textContent=`×${state.prestigeMult.toFixed(2).replace('.',',')}`; const left=Math.max(0,PRESTIGE_COST-state.totalEnergy), ready=left===0; $('altitudeNeed').textContent=ready?'Новая высота доступна':'Нужно ещё '+formatNumber(left)+' энергии';$('prestigeBtn').disabled=!ready;$('prestigeBtn').textContent=ready?`Открыть новую высоту (+0,5 → ×${(state.prestigeMult+.5).toFixed(1).replace('.',',')})`:'Открыть новую высоту';$('musicBtn').classList.toggle('off',!state.music);$('soundBtn').classList.toggle('off',!state.sound);updateStageTrack();updateGuide(); }
+    function renderDevelopment() { const panel=$('developmentPanel');panel.innerHTML='';UPGRADES.forEach(upgrade=>{ const level=state.upgrades[upgrade.id]||0,cost=upgradeCost(upgrade),maxed=isMaxed(upgrade),available=canBuy(upgrade),missing=Math.max(0,cost-state.energy),button=document.createElement('button');button.className=`upgrade ${maxed?'maxed':available?'available':'locked'}`;button.dataset.upgrade=upgrade.id;button.disabled=maxed;button.setAttribute('aria-label',`${upgrade.name}. ${upgrade.desc}. ${maxed?'Полностью улучшено':available?'Доступно для покупки':`Не хватает ${formatNumber(missing)} энергии`}`);button.innerHTML=`<span class="upgrade-code">${upgrade.code}</span><span class="upgrade-main"><span class="upgrade-name">${upgrade.name}</span><span class="upgrade-desc">${upgrade.desc}</span><span class="upgrade-level">Уровень ${level}${maxed?' · максимум':''}</span></span><span class="upgrade-cost">${maxed?'ГОТОВО':formatNumber(cost)}<small>${maxed?'постройка завершена':available?'нажмите, чтобы построить':`ещё ${formatNumber(missing)}`}</small></span>`;button.addEventListener('click',()=>buyUpgrade(upgrade.id,button));panel.appendChild(button);}); }
+    function buyUpgrade(id, element) { unlockAudio(); const upgrade=UPGRADES.find(item=>item.id===id);if(!upgrade||isMaxed(upgrade))return;if(!canBuy(upgrade)){ const missing=upgradeCost(upgrade)-state.energy;element.classList.remove('shake');void element.offsetWidth;element.classList.add('shake');playSound('unavailable');haptic('light');showNotice(`Не хватает ${formatNumber(missing)} энергии`,'warn');return; } const before=currentStage().name;state.energy-=upgradeCost(upgrade);state.upgrades[id]++;state.tutorialSeen=true;recalculate();playSound('build');haptic('medium');renderDevelopment();updateUI();checkStageChange(before);save(false); }
+    function save(sync=true) { state.lastSave=Date.now();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));if(sync)saveCloud(); }
+    function load() { const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;try { const stored=JSON.parse(raw), fresh=defaultState();state={...fresh,...stored,upgrades:{...fresh.upgrades,...(stored.upgrades||{})}};recalculate();const elapsed=Math.min(Date.now()-(state.lastSave||Date.now()),8*60*60*1000);if(elapsed>15000&&state.perSec>0){ const earned=elapsed/1000*state.perSec*.5;state.energy+=earned;state.totalEnergy+=earned;$('offlineText').textContent=`Город накопил ${formatNumber(earned)} энергии, пока вас не было.`;$('offlineModal').classList.add('show'); }}catch(error){ console.warn('Не удалось восстановить сохранение',error);state=defaultState(); }}
+    function saveCloud() { /* Точка расширения для VK Storage/серверного сохранения после создания приложения в кабинете VK. */ }
+    function requestGrant() { unlockAudio();const now=Date.now(),cooldown=30000;if(now<state.grantReadyAt){showNotice(`Следующий грант через ${Math.ceil((state.grantReadyAt-now)/1000)} сек.`,'warn');return;}const reward=()=>{const before=currentStage().name,bonus=Math.max(50,Math.floor(state.perSec*30+state.clickPower*20));state.energy+=bonus;state.totalEnergy+=bonus;state.grantReadyAt=Date.now()+cooldown;playSound('grant');haptic('medium');updateUI();renderDevelopment();checkStageChange(before);showNotice(`+${formatNumber(bonus)} энергии по городскому гранту`,'success');save(false);}; if(bridgeReady&&window.vkBridge?.send){ safeBridge('VKWebAppShowNativeAds',{ad_format:'reward'}).then(result=>{ if(result?.result)reward(); else reward(); }); }else reward(); }
+    function gameLoop() { const now=Date.now(),delta=Math.min((now-lastTick)/1000,.1);lastTick=now;if(visible&&state.perSec>0){state.energy+=state.perSec*delta;state.totalEnergy+=state.perSec*delta;if(now-lastUiRefresh>100){updateUI();lastUiRefresh=now;}}requestAnimationFrame(gameLoop); }
+    function setTab(name) { const development=name==='development';$('developmentTab').classList.toggle('active',development);$('altitudeTab').classList.toggle('active',!development);$('developmentTab').setAttribute('aria-selected',String(development));$('altitudeTab').setAttribute('aria-selected',String(!development));$('developmentPanel').hidden=!development;$('altitudePanel').hidden=development; }
+    function openPrestige() { if(state.totalEnergy<PRESTIGE_COST){showNotice('Для новой высоты нужно ещё '+formatNumber(PRESTIGE_COST-state.totalEnergy)+' энергии','warn');return;}$('newPrestigeMult').textContent=`×${(state.prestigeMult+.5).toFixed(2).replace('.',',')}`;$('prestigeModal').classList.add('show'); }
+    function confirmPrestige() { unlockAudio();state.prestigeMult+=.5;state.energy=0;state.totalEnergy=0;UPGRADES.forEach(upgrade=>state.upgrades[upgrade.id]=0);state.tutorialSeen=false;recalculate();playSound('altitude');haptic('heavy');$('prestigeModal').classList.remove('show');renderDevelopment();updateUI();showNotice(`Новая высота открыта. Коэффициент ×${state.prestigeMult.toFixed(1).replace('.',',')}`,'success');save(); }
 
-    function playSound(type) {
-      if (!state.sound || !audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      const now = audioCtx.currentTime;
-      const profiles = {
-        charge: [520, 760, .09, .10],
-        build: [330, 700, .10, .18],
-        evolve: [300, 940, .12, .42],
-        altitude: [220, 1150, .11, .62]
-      };
-      const [start, end, volume, duration] = profiles[type] || profiles.charge;
-      osc.type = type === 'altitude' ? 'triangle' : 'sine';
-      osc.frequency.setValueAtTime(start, now);
-      osc.frequency.exponentialRampToValueAtTime(end, now + duration);
-      gain.gain.setValueAtTime(volume, now);
-      gain.gain.exponentialRampToValueAtTime(.001, now + duration);
-      osc.start(); osc.stop(now + duration);
-    }
-
-    function recalculate() {
-      let clickPower = 1, perSec = 0, mult = 1;
-      UPGRADES.forEach(upgrade => {
-        const level = state.upgrades[upgrade.id] || 0;
-        if (!level) return;
-        const effect = upgrade.effect(level);
-        if (effect.clickPower) clickPower += effect.clickPower;
-        if (effect.perSec) perSec += effect.perSec;
-        if (effect.mult) mult *= effect.mult;
-      });
-      state.clickPower = clickPower * state.prestigeMult * mult;
-      state.perSec = perSec * state.prestigeMult * mult;
-      state.mult = mult;
-    }
-
-    function getUpgradeCost(upgrade) { return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, state.upgrades[upgrade.id] || 0)); }
-    function canBuy(upgrade) { return (state.upgrades[upgrade.id] || 0) < upgrade.maxLevel && state.energy >= getUpgradeCost(upgrade); }
-    function getCurrentStage() { return [...STAGES].reverse().find(stage => state.totalEnergy >= stage.req) || STAGES[0]; }
-    function getNextStage() { const index = STAGES.findIndex(stage => stage.name === getCurrentStage().name); return STAGES[index + 1] || null; }
-
-    function createParticles() {
-      const holder = document.getElementById('particles');
-      for (let i = 0; i < 7; i++) {
-        const particle = document.createElement('i');
-        particle.className = 'particle';
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 42 + Math.random() * 62;
-        particle.style.left = '50%'; particle.style.top = '50%';
-        particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-        particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-        particle.style.background = i % 3 === 0 ? '#ff9c45' : i % 3 === 1 ? '#ffd46c' : '#3eaa72';
-        holder.appendChild(particle);
-        setTimeout(() => particle.remove(), 700);
-      }
-    }
-
-    function chargeCity(event) {
-      initAudio();
-      let amount = state.clickPower;
-      const isCritical = Math.random() < .08;
-      if (isCritical) amount *= 5;
-      state.energy += amount; state.totalEnergy += amount;
-      const button = document.getElementById('cityButton');
-      button.classList.add('clicked'); setTimeout(() => button.classList.remove('clicked'), 115);
-      const rect = button.getBoundingClientRect();
-      const pointX = (event.clientX || event.touches?.[0]?.clientX || rect.left + rect.width / 2) - rect.left;
-      const pointY = (event.clientY || event.touches?.[0]?.clientY || rect.top + rect.height / 2) - rect.top;
-      const value = document.createElement('span');
-      value.className = `floating-value${isCritical ? ' critical' : ''}`;
-      value.textContent = `${isCritical ? 'ЭНЕРГОВСПЛЕСК! ' : '+'}${formatNumber(amount)}`;
-      value.style.left = `${pointX}px`; value.style.top = `${pointY}px`;
-      button.appendChild(value); setTimeout(() => value.remove(), 900);
-      createParticles(); playSound('charge');
-      const previous = document.getElementById('stageName').textContent;
-      updateUI();
-      renderDevelopment();
-      const current = getCurrentStage();
-      if (current.name !== previous) { playSound('evolve'); showToast(`Город вырос: ${current.name}`); }
-      save();
-    }
-
-    function updateUI() {
-      document.getElementById('energyDisplay').innerHTML = `${formatNumber(state.energy)} <span class="energy-unit">энергии</span>`;
-      document.getElementById('perSecDisplay').textContent = formatNumber(state.perSec);
-      const stage = getCurrentStage();
-      const image = document.getElementById('cityImage');
-      image.src = stage.img; image.alt = stage.name;
-      document.getElementById('stageName').textContent = stage.name;
-      document.getElementById('stageLevel').textContent = `ЭТАП ${String(stage.stage).padStart(2, '0')}`;
-      document.getElementById('cityButton').dataset.stage = stage.stage;
-      const next = getNextStage();
-      if (next) {
-        const progress = Math.min(100, Math.floor(((state.totalEnergy - stage.req) / (next.req - stage.req)) * 100));
-        document.getElementById('evoFill').style.width = `${Math.max(0, progress)}%`;
-        document.getElementById('evoPercent').textContent = `${Math.max(0, progress)}%`;
-      } else {
-        document.getElementById('evoFill').style.width = '100%';
-        document.getElementById('evoPercent').textContent = 'ГОРОД МЕЧТЫ';
-      }
-      document.getElementById('prestigeMult').textContent = `×${state.prestigeMult.toFixed(2).replace('.', ',')}`;
-      const prestigeButton = document.getElementById('prestigeBtn');
-      const canPrestige = state.totalEnergy >= 1000000;
-      prestigeButton.disabled = !canPrestige;
-      prestigeButton.textContent = canPrestige ? `Открыть новую высоту (+0,5 → ×${(state.prestigeMult + .5).toFixed(1).replace('.', ',')})` : 'Открыть новую высоту';
-    }
-
-    function renderDevelopment() {
-      const panel = document.getElementById('developmentPanel');
-      panel.innerHTML = '';
-      UPGRADES.forEach(upgrade => {
-        const level = state.upgrades[upgrade.id] || 0;
-        const cost = getUpgradeCost(upgrade);
-        const maxed = level >= upgrade.maxLevel;
-        const item = document.createElement('button');
-        item.className = `upgrade${canBuy(upgrade) ? '' : ' disabled'}`;
-        item.disabled = !canBuy(upgrade);
-        item.innerHTML = `<span class="upgrade-code">${upgrade.code}</span><span><span class="upgrade-name">${upgrade.name}</span><span class="upgrade-desc">${upgrade.desc}</span><span class="upgrade-level">Уровень ${level}${maxed ? ' · максимум' : ''}</span></span><span class="upgrade-cost">${maxed ? 'ПОЛНОСТЬЮ' : `${formatNumber(cost)}<br>энергии`}</span>`;
-        if (!maxed) item.addEventListener('click', () => buyUpgrade(upgrade.id));
-        panel.appendChild(item);
-      });
-    }
-
-    function buyUpgrade(id) {
-      const upgrade = UPGRADES.find(item => item.id === id);
-      if (!upgrade || !canBuy(upgrade)) return;
-      state.energy -= getUpgradeCost(upgrade);
-      state.upgrades[id]++;
-      recalculate(); playSound('build'); renderDevelopment(); updateUI(); save();
-    }
-
-    function save() {
-      state.lastSave = Date.now();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      saveCloud();
-    }
-
-    function load() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      try {
-        const data = JSON.parse(raw);
-        state = { ...state, ...data, upgrades: { ...state.upgrades, ...(data.upgrades || {}) } };
-        recalculate();
-        const now = Date.now();
-        const difference = Math.min(now - (state.lastSave || now), 1000 * 60 * 60 * 8);
-        if (difference > 15000 && state.perSec > 0) {
-          const earned = (difference / 1000) * state.perSec * .5;
-          state.energy += earned; state.totalEnergy += earned;
-          document.getElementById('offlineText').textContent = `Город накопил ${formatNumber(earned)} энергии, пока вас не было.`;
-          document.getElementById('offlineModal').classList.add('show');
-        }
-      } catch (error) { console.error('Ошибка загрузки сохранения', error); }
-    }
-
-    function initYandexSDK() {
-      if (typeof YaGames === 'undefined') { console.log('Yandex Games SDK не найден в локальном режиме'); return; }
-      YaGames.init().then(sdk => {
-        ysdk = sdk; ysdk.features.LoadingAPI?.ready();
-        ysdk.getPlayer({ scopes: false }).then(currentPlayer => { player = currentPlayer; loadCloudSave(); }).catch(error => console.log('Не удалось получить игрока', error));
-        ysdk.on('game_api_resume', () => { lastTick = Date.now(); });
-      }).catch(error => console.log('Ошибка инициализации Yandex Games SDK', error));
-    }
-
-    function saveCloud() {
-      if (!player || player.getMode() === 'lite') return;
-      try { player.setData({ tinySkyline: JSON.stringify(state) }, true).catch(error => console.log('Облачное сохранение недоступно', error)); } catch (error) { console.log('Ошибка облачного сохранения', error); }
-    }
-
-    function loadCloudSave() {
-      if (!player || player.getMode() === 'lite') return;
-      player.getData(['tinySkyline']).then(data => {
-        if (!data?.tinySkyline) return;
-        const cloud = JSON.parse(data.tinySkyline);
-        if (cloud.lastSave > (state.lastSave || 0)) {
-          state = { ...state, ...cloud, upgrades: { ...state.upgrades, ...(cloud.upgrades || {}) } };
-          recalculate(); renderDevelopment(); updateUI(); showToast('Прогресс загружен из облака');
-        }
-      }).catch(error => console.log('Не удалось загрузить облачное сохранение', error));
-    }
-
-    function showRewardedAd(onReward) {
-      if (!ysdk) { onReward?.(); return; }
-      ysdk.adv.showRewardedVideo({ callbacks: {
-        onRewarded: () => onReward?.(),
-        onClose: () => { lastTick = Date.now(); },
-        onError: () => showToast('Грант пока недоступен')
-      }});
-    }
-
-    function showInterstitial() {
-      if (!ysdk || Date.now() - lastInterstitial < INTERSTITIAL_COOLDOWN) return;
-      ysdk.adv.showFullscreenAdv({ callbacks: { onClose: shown => { if (shown) lastInterstitial = Date.now(); lastTick = Date.now(); }, onError: () => {} } });
-    }
-
-    function watchGrant() {
-      showRewardedAd(() => {
-        const bonus = Math.max(50, Math.floor(state.perSec * 30 + state.clickPower * 20));
-        state.energy += bonus; state.totalEnergy += bonus;
-        playSound('build'); updateUI(); renderDevelopment(); showToast(`+${formatNumber(bonus)} энергии по городскому гранту`); save();
-      });
-    }
-
-    function gameLoop() {
-      const now = Date.now();
-      const delta = Math.min((now - lastTick) / 1000, .1);
-      lastTick = now;
-      if (state.perSec > 0 && isVisible) { state.energy += state.perSec * delta; state.totalEnergy += state.perSec * delta; }
-      updateUI(); requestAnimationFrame(gameLoop);
-    }
-
-    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
-      const isDevelopment = tab.dataset.tab === 'development';
-      document.querySelectorAll('.tab').forEach(item => { item.classList.toggle('active', item === tab); item.setAttribute('aria-selected', String(item === tab)); });
-      document.getElementById('developmentPanel').style.display = isDevelopment ? 'block' : 'none';
-      document.getElementById('altitudePanel').style.display = isDevelopment ? 'none' : 'block';
-    }));
-    document.getElementById('cityButton').addEventListener('click', chargeCity);
-    document.getElementById('cityButton').addEventListener('touchstart', event => { event.preventDefault(); chargeCity(event); }, { passive: false });
-    document.getElementById('offlineOk').addEventListener('click', () => { document.getElementById('offlineModal').classList.remove('show'); updateUI(); save(); });
-    document.getElementById('adBtn').addEventListener('click', watchGrant);
-    document.getElementById('soundBtn').addEventListener('click', () => { state.sound = !state.sound; document.getElementById('soundBtn').textContent = state.sound ? 'Звук: вкл.' : 'Звук: выкл.'; if (state.sound) initAudio(); save(); });
-    document.getElementById('resetBtn').addEventListener('click', () => { if (confirm('Сбросить развитие города? Прогресс текущего города будет удалён.')) { localStorage.removeItem(STORAGE_KEY); location.reload(); } });
-    document.getElementById('prestigeBtn').addEventListener('click', () => { if (state.totalEnergy >= 1000000) { document.getElementById('newPrestigeMult').textContent = `×${(state.prestigeMult + .5).toFixed(2).replace('.', ',')}`; document.getElementById('prestigeModal').classList.add('show'); } });
-    document.getElementById('prestigeCancel').addEventListener('click', () => document.getElementById('prestigeModal').classList.remove('show'));
-    document.getElementById('prestigeConfirm').addEventListener('click', () => {
-      state.prestigeMult += .5; state.energy = 0; state.totalEnergy = 0; UPGRADES.forEach(upgrade => state.upgrades[upgrade.id] = 0);
-      recalculate(); playSound('altitude'); document.getElementById('prestigeModal').classList.remove('show'); renderDevelopment(); updateUI(); showToast(`Новая высота открыта! Коэффициент ×${state.prestigeMult.toFixed(1).replace('.', ',')}`); save(); setTimeout(showInterstitial, 800);
-    });
-    document.addEventListener('visibilitychange', () => { isVisible = !document.hidden; if (isVisible) lastTick = Date.now(); });
-    document.addEventListener('contextmenu', event => event.preventDefault());
-
-    load(); recalculate(); renderDevelopment(); updateUI(); gameLoop(); setTimeout(initYandexSDK, 300); setInterval(save, 15000);
+    $('cityButton').addEventListener('click',chargeCity);$('cityButton').addEventListener('touchstart',event=>{event.preventDefault();chargeCity(event);},{passive:false});$('developmentTab').addEventListener('click',()=>setTab('development'));$('altitudeTab').addEventListener('click',()=>setTab('altitude'));$('musicBtn').addEventListener('click',toggleMusic);$('soundBtn').addEventListener('click',toggleSound);$('grantBtn').addEventListener('click',requestGrant);$('prestigeBtn').addEventListener('click',openPrestige);$('prestigeCancel').addEventListener('click',()=>$('prestigeModal').classList.remove('show'));$('prestigeConfirm').addEventListener('click',confirmPrestige);$('offlineOk').addEventListener('click',()=>$('offlineModal').classList.remove('show'));$('stageModalOk').addEventListener('click',()=>$('stageModal').classList.remove('show'));$('resetBtn').addEventListener('click',()=>{if(confirm('Сбросить развитие города? Текущий прогресс будет удалён с этого устройства.')){localStorage.removeItem(STORAGE_KEY);state=defaultState();recalculate();renderDevelopment();updateUI();showNotice('Город сброшен. Начните новую историю.');}});document.addEventListener('visibilitychange',()=>{visible=!document.hidden;if(visible)lastTick=Date.now();});document.addEventListener('contextmenu',event=>event.preventDefault());
+    load();recalculate();stageAtLastUpdate=stageIndex();renderDevelopment();updateUI();initBridge();gameLoop();setInterval(()=>save(),15000);
   </script>
 </body>
 </html>
